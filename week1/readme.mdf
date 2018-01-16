@@ -1,0 +1,110 @@
+Scaling computations based on funcional paradingm(including frameworks like spark) is eaier than scaling over an imperative one
+
+What Spark is?
+Spark is a functionally oriented framework for large scale data processing that's implemented in Scala. 
+
+Why not  R, Python, Octave and MATLAB:
+Because they are good for small amount of info, and this languague or frameworks wont allow us to scale in an easy way, we have to re-implement a lot.
+
+- Imaginemos el poder recolectar toda la onformación de los smart phones de nuestros clientes y saber por donde transita, que actividades hace, que ropa usa al realizar actividades
+especificas y demás esto es algo que las empresas podrían sacar demasiado provecho e impulsar sus negocios.
+
+-El uso de scala es porque vamos a poder scalar nuestro problemas pequeños a más grande con facilidad, esto es, si antes ejecutabamos nuestro 
+computo en un solo nodo, facilmente lo podemos correr en muuuchos más, sin tener que reescribir el código o cosas drásticas. ADEMÁS DE QUE SI SE PUEDE CON OTROS
+EL COSTO EN TIEMPO Y PRODUCTIVIDAD DE DESARROLLO, SUMANDOLE QUE EL DEVELOPER DEBE TENER UNA EXPERIENCIA ENORME, SPARK AYUDA MUCHO EN ESO PORQUE LA FORMA EL DIEÑO , ETC YA ESTÁ
+
+
+ REASONS why we should use Spark
+
+ 1- Spark es más expresivo:  Nos brinda Apis para el manejo de computaciones distribuidos en una forma que se parece a las listas inmutables de scala, 
+dando mas operciones que se pueden componer(HOF, map, flatMap, filter, reduce ) y no solo ofreciendo la posibilidad de MapReduce como lo hace Hadoop 
+que de forma rigida define solo el map and reduce sin las combinaciones o las composiciones anteriores (HOF, map, flatMap, filter, reduce )
+
+ 2- Performance no  solo en tiempo del computo sino en la interacción con los developers (mejorando la productividad del developer) CONSIDERADOS COMO DATA ANALYST (NUEVO ROL EN LAS COMPAÑIAS)
+
+ 3- Good for DATA Sciense: It enables Iteration, that is required by most  algorithms in data Sciense's toolbox, that means that multiple passes in de set of date are required by  data Sciense algortihms.
+	En hadoop se puede hacer pero con ciertas librerías que lo que hacen es cambiar lo que se tiene , mientras que en spark no.
+
+
+
+::::::::::::::::::::::::::::DATA PARALLEL TO ---- DISTRIBUTED DATA PARALLEL ::::::::::::::::::::::::::::
+
+ Cómo es el procesamiento de datos en Paralelo(data parallel)?
+
+Imaginemos un solo jar-tarro(lleno de dulces de colores) y vamos a ejecutar una accion en cada  uno de los elementos del tarro (map), imagine que es cambiar el color etc
+-Lo que hace la prog paralela es aprovecha la cantidad de cores(núcleos) y ejecuta la operacion.
+ 1- -Divide el set de datos - PARTICIONAMIENTO EN MEMORIA (CREO QUE LAS BDS LO HACEN CUANDO SE EJECUTA UN PARALLEL)
+ 2- Establecer workers o hilos que van a procesar cada pedazo de datos resultante del punto 1
+ 3- hace Join o combine de todos los procesos independientes para dar el resultado final  (solo si un resultado final es requerido, muchas veces el resultad es la operacion ejecutada en el paso 2 y no un unico resultado)
+Todo lo anterior usando una memoria compartida (shared memory) y un solo nodo or ON THE SAME MACHINE!!
+
+
+DE QUE SE TRATA EL PROCESAMIENTO DE DATOS EN PARALELO DISTRIBUIDO ?
+- YA NO hay una memoria compartida 
+1- Divide el set de datos EN DIFERENTES NODOS. el jar ya se vuelte en un COLECCIÓN DISTRIBUIDA
+2- Los NODOS independiente mente operan sobre esos pedazos de código.
+3- hace Join o combine de todos los procesos independientes para dar el resultado final  (solo si un resultado final es requerido, muchas veces el resultad es la operacion ejecutada en el paso 2 y no un unico resultado)
+
+
+
+	
+A todo lo anterior se le suma un nuevo reto a enfrentar ...la Latencia!!
+
+para e computo paralelo distribuido se usa Apache Spark
+
+Spark implementa un modelo de Distributed Data Parallel llamado RDDs, Resilient(elástico, eje que permite extenderse on contraterse ante eventos com mayor o menor carga) Distributed Data Set
+	
+En donde el set a atacar se trata como una coleccion(listado) y spark aplica un algoritmo de PARTICIONAMIENTO y se inicia con la operacion sobre el listado, nosotros solo hacemos Lisxx.map y spark solo 
+ya sabe que debe particionar y ejecutar la operación, fatástico no?? 
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+:::::::::::::::::::Latency:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+Cuando nos vamos al mundo de DISTRIBUTED DATA PARALLEL, surgen las siguientes preocupaciones:
+
+Partial Failure: Fallas de un subconjunto de maquinas que intervienen en el computo distribuido, esto no sucede en shared memory(data parallel). POR LO cual ESTE nos obliga a pensar 
+que hacer sí un nodo está caido o presenta fallas???
+
+Latency: Los nodos en el computo distribuido responde en tiempos distintos debido a la conexión de red, la latencia que suma la red. POR LO CUAL este afecta la velocidad en el computo como tal
+
+
+
+IMPORTANT LATENCY NUMBER:
+
+Tabla que nos indica el tiempo que requiere X operacion en MEMORIA, DISCO O EN LA RED
+EL resutado se puede resumir en:
+	Operaciones en Memoria son más rápidas
+	Operaciones en Disco son lentas 
+	Operaciones en la Red son las MAS LENTAS
+
+
+
+Hadoop SE CONSIDERA EL predecesor de Spark, Es un framework de procesamiento de datos a gran escala, es una implementación Open Source del algoritmo MapReduce de Google.
+
+Y lo que hadoop ofrecia era porder escalar computos que se hacian en decenas o centenaas de nodos a miles de nodos y mucho más. Claro la probabilidad de un nodo fallando es mucho MAYOR
+PEEERO ahí es cuando viene lo bacano, hadoop sabe ejecutar el computo y asgura al programador que se va a ejecutar, y si existe un nodo caído el sabe como re-computar el set de datos que
+allí se estaba procesando.
+
+entonces brinda Fault-Tolerance + Simple API.
+
+ENTONCES POR QUE NOS BASAMOS EN SPARK??
+Debido a que Hadoop con el fin de tratar con el (deal with) problema de fault tolerance escribe las operaciones intermedias en disco(para recordar en que iba en caso de falla) y como vimos en IMPORTANT LATENCY NUMBER, Operaciones en Disco son lentas 
+y si le suma el de la red QUE ES ALGO CON LO QUE DEBEMOS SER CONSCIENTES DE QUE VA A EXISTIR entonces vienen los problemas de LATENCIA EN CADA NODO
+
+
+SPARK YA SABE COMO ENFRENTAR EL FAULT TOLERANCE Y ADEMÁS se basa en PROGRAMACIÓN FUNCIONAL PARA LOS PROBLEMAS DE LATENCIA Y SE DESHACE DE TENER QUE ESCRIBIR DEMASIADO EN DISCO y mas en Memoria
+
+Cómo ?
+Trata de que la mayoría de los datos que requiere estén todos en memoria e inmutables, esto permite que al hacer una transformacion de los datos (map filter etc) se retorne otro set de datos inmutable
+como en scala collections y de esta manera si un nodo falló en uno de los calculos entonces Spark lo que hace es recordar en que transformación iba el computo y le hace replay en ése mismo nodo o en otro 
+
+EL hecho de hacer el mayor trabajo en memoria hace que sea 100x más veloz que Haddop (ver tabla IMPORTANT LATENCY NUMBER para saber el motivo)
+De hecho hay estadisticas que muestra cómo desde la primera iteración sobre un set de datos Spark supera a Hadoop y al volver a correr o iterar es mucho más rápido, por lo de la info en caché
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+
+
+
