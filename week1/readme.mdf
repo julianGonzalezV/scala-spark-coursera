@@ -105,6 +105,105 @@ De hecho hay estadisticas que muestra cómo desde la primera iteración sobre un
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
+RDDS:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+Resilient Distributed Datasets: Spark's Distributed Collections AbstrActions and they're really are the core of spark
+Muy similares a Colecciones inmutables
+
+
+
+
+Existen 2 formas de crear RDDs: 
+1- A partir de la transformación de otro RDD (mediante map, filter, etc).
+2- A partir de la creación mediante sparkContext or SparkSession:	
+	parallelize: convierte una lista scala en un RDD
+
+	textFile: lee el contenido de un archivo desde HDFs(hadoop file system)
+	o a partir del sistema local de archivos y crea un RDD de String donde cada línea del archivo es un elemento de la colección
+	siendo text file el mas usado porque la mayoría de veces nos van a pasar un set de datos a nalizar en un sistema de archivos
+
+ 
+RDDs: Transformations and Actions:
+
+En scala se tienen:
+Transformers: Retornan una nueva lista como resultado map, filters, flatMap, groupBy
+Accessor: retornan un valor reducido eg reduce, fold, agregate
+
+
+Llevandolo a Spark tenemos 
+- Transformations: Retornan un nuevo RDD. Transformation son operaciones tipo LAZY , donde el resultado no se computa de manera inmediata sino que se resuelve cuando es requerida o cuando se 
+   llama
+
+
+- Actions: actua sobre un RDD y retorna un resultado o lo guarda el computo en un sistema de almacenamiento externo ejemplo HDFS , nO RTORNA UN RDD sino algo que es un valor o resultado 
+	Actions son operaciones tipo EAGER, donde el resultado se computa inmediatamente
+
+
+Porque es importante lo de Lazy: Debido a que se trata de que existe la minima interacción con la RED (latency drawback)
+
+Y como se utiliza en la vida real, por lo que he visto el transformation define y el action ejecuta esa definiciṕn 
+
+entonces un error que cometemos es pensar que algo pasa con operaciones de Trasnformación y que si aplicamos map, flamMat, Filter..entonces algo pasa con el CLUSTER cuando NOO es así sino hasta que se llama una operacion tipo ACTION , por ejemplo un reduce.
+
+ Common Actions: reduce (unico valor u otro tipo pero no un RDD), fold, count foreach(apply a function to RDD pero es action type porque el resultado en un UNIT y no un RDD)
+collect retorna un Array[A , takeretorna un Array[A , -----------------------EAGER!!!
+
+
+ Common Transformations: Map, flatMap, filter,Distinct, ------------------------LAZY!!!  deferred que le llaman 
+porque se ejecuta cuando un action lo requiere
+
+LO BACANO DE ESO ES EL STREAMING : Note como cada elemento se le va a aplicar todas las transformaciones y va saliendo al final como resultado uno a uno
+u no primero filter a todo, luego map a todo, lueg xx , tomaría demasiado tiempo
+
+
+
+
+::::::::::::::::: Transformations ON two RDDs ::::::::::::::::: Por que se llama Transformation?? porque todas retornan un tipo RDD
+Union: Rdd con l contenido de ambos RDDs
+Intersection: Solo los iguales de ambos
+Substrat : Los de A que no están en B
+Cartesian : Producto cartesaion entre el RDD A y el RDD B 
+
+
+
+
+OTHER USEFUL RDD ACTIONS:
+TakeSample returns an Array[T   Para reducir el tamanio del dataSet 
+TakeOrdered returns an Array[T  : Para reducir el tamanio del dataSet , hacer un take de x elementos peeero que el resultado se encuentre ordenado, natural o un comparador personalizado
+SaveAsTextFile returns Unit :  
+SaveAsSequenceFile returns Unit  :   
+
+
+
+
+:::::Evaluation in Spark: Diferente(unlike) a scala collections:::::::::::::::::
+
+Cada Iteración en Hadoop escribe en disco de nuevo y la siguiente iteracion debe volver a leer del disco :S
+COn Spark no pasa esto sin que de una se procede con al siguiente iteraciṕn porque todo está en memoria.
+
+
+
+RDDS SE VUELVEN A COMPUTAR O RESOLVER O CALCULAR CADA VEZ QUE UNA OPERACION TIPO aCTION ES EJECUTADA!!!!
+Para evitar lo anterior entonces guardemos en memoria los computos realizados , en spark se logra haciendo uso de la funcion persist(), para persistir el RDDs
+algo así como que le l alínea 10 guardemos el val de un filter transformation y ese val en la línea 11 le apliquemos un Actions operation y luego en la línea 12 otro
+ Action operation, sí no existe el PERSIS() al final entonces la referencia en la línea 10 vuelve y se comuta, es decir que vuelve y ejecuta el filter.
+
+Lo anterior es SUPER IMPORTANTE porque si lo aplciamos vamos a mejorar el tiempo de respuesta DEBEMOS APLICARLO A NUESTRO TRABAJO DIARIO Y NO OLVIDAR ESTE TIP
+
+
+OTRO TIP ES USAR LAS OPEraciones tipo Transformation juntas o seguidas una después de otra , es como si en un for tengamos todos los metodos transformadores y no voler a hacer otro 
+for para la siguiente función transformadora
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
