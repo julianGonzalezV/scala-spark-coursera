@@ -52,8 +52,17 @@ object WikipediaRanking {
 
   /* Compute an inverted index of the set of articles, mapping each language
    * to the Wikipedia pages in which it occurs.
+   * la idea es poder mapear desde le nombre del lenguaje a los articulos que los mencionan al menos una vez
+   * (WikipediaArticle)
    */
-  def makeIndex(langs: List[String], rdd: RDD[WikipediaArticle]): RDD[(String, Iterable[WikipediaArticle])] = ???
+  def makeIndex(langs: List[String], rdd: RDD[WikipediaArticle]): RDD[(String, Iterable[WikipediaArticle])] =
+  {
+    val v1: RDD[String] = sc.parallelize(langs)
+    val v2: RDD[(String, RDD[WikipediaArticle])] = sc.parallelize(langs).map(lang => (lang, rdd.filter(x=>x.mentionsLanguage(lang))))
+    val v21  = sc.parallelize(langs).flatMap(lang => (lang, rdd))
+    val v3: RDD[(String, Iterable[RDD[WikipediaArticle]])] = v2.groupByKey()
+    //langs.map(langElem => (langElem, rdd.gr))
+  }
 
   /* (2) Compute the language ranking again, but now using the inverted index. Can you notice
    *     a performance improvement?

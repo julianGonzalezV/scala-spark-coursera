@@ -1,5 +1,7 @@
 package wikipedia
 
+import org.apache.spark.{SparkConf, SparkContext}
+
 object ListMethodsExamples extends App{
 
   val list1 = List(1,2,3,4,5,6)
@@ -30,5 +32,23 @@ object ListMethodsExamples extends App{
   */
   val aggregateResult = list1.par.aggregate((0, 0))((x, y) => (x._1 + y, x._2 + 1), (x,y) => (x._1 + y._1, x._2 + y._2))
   System.out.println(aggregateResult)
+
+
+
+/*
+  val conf: SparkConf = new SparkConf()
+  val sc: SparkContext = new SparkContext(conf)
+
+  val test = Seq(("New York", "Jack"),
+    ("Los Angeles", "Tom"),
+    ("Chicago", "David"),
+    ("Houston", "John"),
+    ("Detroit", "Michael"),
+    ("Chicago", "Andrew"),
+    ("Detroit", "Peter"),
+    ("Detroit", "George")
+  )
+  sc.parallelize(test).groupByKey().mapValues(_.toList).foreach(println)
+*/
 
 }
