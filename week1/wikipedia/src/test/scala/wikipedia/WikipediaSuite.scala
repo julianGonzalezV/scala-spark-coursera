@@ -92,6 +92,7 @@ class WikipediaSuite extends FunSuite with BeforeAndAfterAll {
     assert(res, "occurrencesOfLang given (specific) RDD with one element should equal to 1")
   }
 
+
   test("'rankLangs' should work for RDD with two elements") {
     assert(initializeWikipediaRanking(), " -- did you fill in all the values in WikipediaRanking (conf, sc, wikiRdd)?")
     import WikipediaRanking._
@@ -102,53 +103,57 @@ class WikipediaSuite extends FunSuite with BeforeAndAfterAll {
     assert(res)
   }
 
-  test("'makeIndex' creates a simple index with two entries") {
-    assert(initializeWikipediaRanking(), " -- did you fill in all the values in WikipediaRanking (conf, sc, wikiRdd)?")
-    import WikipediaRanking._
-    val langs = List("Scala", "Java")
-    val articles = List(
-        WikipediaArticle("1","Groovy is pretty interesting, and so is Erlang"),
-        WikipediaArticle("2","Scala and Java run on the JVM"),
-        WikipediaArticle("3","Scala is not purely functional")
-      )
-    val rdd = sc.parallelize(articles)
-    val index = makeIndex(langs, rdd)
-    val res = index.count() == 2
-    assert(res)
-  }
 
-  test("'rankLangsUsingIndex' should work for a simple RDD with three elements") {
-    assert(initializeWikipediaRanking(), " -- did you fill in all the values in WikipediaRanking (conf, sc, wikiRdd)?")
-    import WikipediaRanking._
-    val langs = List("Scala", "Java")
-    val articles = List(
-        WikipediaArticle("1","Groovy is pretty interesting, and so is Erlang"),
-        WikipediaArticle("2","Scala and Java run on the JVM"),
-        WikipediaArticle("3","Scala is not purely functional")
-      )
-    val rdd = sc.parallelize(articles)
-    val index = makeIndex(langs, rdd)
-    val ranked = rankLangsUsingIndex(index)
-    val res = (ranked.head._1 == "Scala")
-    assert(res)
-  }
 
-  test("'rankLangsReduceByKey' should work for a simple RDD with four elements") {
-    assert(initializeWikipediaRanking(), " -- did you fill in all the values in WikipediaRanking (conf, sc, wikiRdd)?")
-    import WikipediaRanking._
-    val langs = List("Scala", "Java", "Groovy", "Haskell", "Erlang")
-    val articles = List(
-        WikipediaArticle("1","Groovy is pretty interesting, and so is Erlang"),
-        WikipediaArticle("2","Scala and Java run on the JVM"),
-        WikipediaArticle("3","Scala is not purely functional"),
-        WikipediaArticle("4","The cool kids like Haskell more than Java"),
-        WikipediaArticle("5","Java is for enterprise developers")
-      )
-    val rdd = sc.parallelize(articles)
-    val ranked = rankLangsReduceByKey(langs, rdd)
-    val res = (ranked.head._1 == "Java")
-    assert(res)
-  }
+   test("'makeIndex' creates a simple index with two entries") {
+     assert(initializeWikipediaRanking(), " -- did you fill in all the values in WikipediaRanking (conf, sc, wikiRdd)?")
+     import WikipediaRanking._
+     val langs = List("Scala", "Java")
+     val articles = List(
+         WikipediaArticle("1","Groovy is pretty interesting, and so is Erlang"),
+         WikipediaArticle("2","Scala and Java run on the JVM"),
+         WikipediaArticle("3","Scala is not purely functional")
+       )
+     val rdd = sc.parallelize(articles)
+     val index = makeIndex(langs, rdd)
+     val res = index.count() == 2
+     assert(res)
+   }
+
+
+   test("'rankLangsUsingIndex' should work for a simple RDD with three elements") {
+     assert(initializeWikipediaRanking(), " -- did you fill in all the values in WikipediaRanking (conf, sc, wikiRdd)?")
+     import WikipediaRanking._
+     val langs = List("Scala", "Java")
+     val articles = List(
+         WikipediaArticle("1","Groovy is pretty interesting, and so is Erlang"),
+         WikipediaArticle("2","Scala and Java run on the JVM"),
+         WikipediaArticle("3","Scala is not purely functional")
+       )
+     val rdd = sc.parallelize(articles)
+     val index = makeIndex(langs, rdd)
+     val ranked = rankLangsUsingIndex(index)
+     val res = (ranked.head._1 == "Scala")
+     assert(res)
+   }
+
+
+   test("'rankLangsReduceByKey' should work for a simple RDD with four elements") {
+     assert(initializeWikipediaRanking(), " -- did you fill in all the values in WikipediaRanking (conf, sc, wikiRdd)?")
+     import WikipediaRanking._
+     val langs = List("Scala", "Java", "Groovy", "Haskell", "Erlang")
+     val articles = List(
+         WikipediaArticle("1","Groovy is pretty interesting, and so is Erlang"),
+         WikipediaArticle("2","Scala and Java run on the JVM"),
+         WikipediaArticle("3","Scala is not purely functional"),
+         WikipediaArticle("4","The cool kids like Haskell more than Java"),
+         WikipediaArticle("5","Java is for enterprise developers")
+       )
+     val rdd = sc.parallelize(articles)
+     val ranked = rankLangsReduceByKey(langs, rdd)
+     val res = (ranked.head._1 == "Java")
+     assert(res)
+   }
 
 
 }
