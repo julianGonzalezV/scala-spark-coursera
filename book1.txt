@@ -1,0 +1,30 @@
+Driver programs access Spark through a SparkContext object, which represents a
+connection to a computing cluster. In the shell, a SparkContext is automatically
+
+
+The nodes are called Executors.
+:::::::::::::
+Lo importante de diferenciar el Tranformation del Action es que el Transformation retorna otro RDD Y es una operación LAZY, es decir que no se ejecuta inmediatamente se defina y si en cadena varios LAzy operations y al final se APLICA 
+un ACTION(no resuelve a RDD, it´s a result to the DRIVER PROGRAMor write data to an external storage system.) (EJEMPLO "first")entonces viene lo INTERESANTE, spark para porque encuentra el primero. Al no se Lazy los transformatio entonces imagine el desperdicio de memoria y el performance si por cada tranformer OP cargara en 
+memoria el resultado.
+:::::::::::::
+Spark’s RDDs are by default recomputed each time you run an action on
+them. If you would like to reuse an RDD in multiple actions, you can ask Spark to
+persist it using RDD.persist()
+
+OJO: para la nota anterios persist() es lo mismo que llamar cache()
+
+
+::::::::::
+parallelize() es otra forma de crear RDDs: Esta operacion para cuando uno está aprendiendo está bien pero en un ambiente productivo no es aconsejable porque va a requerir de deamsiada memoria para ello, PARA TEMAS DE TDD SI PUEDE APLICAR PORQUE NOS PRUEBAS DE UN SET DE REGISTROS PEQUEÑOS
+
+
+
+::::::::::lineage graph::::::::::
+Pensemos en este termino como el hecho de que Spark guarda registro o traza de las dependencias generadas entre los diferendes RDDs creados, 
+ejemplo claro es el de hacer dos filter sobre un mismo RDD inicial y al final unirlos, cada filter generó un RDD nuevo pero Spark sabe de donde viene cada uno y como unirlos con UNION.
+
+:::::::::::::::::
+collect() shouldn’t be used on large datasets, BE sure that the amount of data is short or at last for your machine: EN la practica casi que no se usa por la misma razón
+
+
