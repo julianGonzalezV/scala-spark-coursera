@@ -28,3 +28,97 @@ ejemplo claro es el de hacer dos filter sobre un mismo RDD inicial y al final un
 collect() shouldn’t be used on large datasets, BE sure that the amount of data is short or at last for your machine: EN la practica casi que no se usa por la misma razón
 
 
+::::::::::::::::Passing Functions to Spark:::::::::::::::::::::::::::::
+
+Muy importante saber esto ya que hay algo particularcon spark o más bien llamando a spark (mediante map, flatMap, filter....) que consiste en que 
+si hacemos referencia a una funcion en la clase actual (y no mediate el uso de lambdas) usando o no la palabra this.xx , entonces se va a enviar a los
+executors o nodos de spark toooodo el objeto completo que contiene la función y puede generar errores o problemas de comunicación una vez el objeto sea muy grande 
+
+class SearchFunctions(val query: String) {
+	def isMatch(s: String): Boolean = {
+		s.contains(query)
+	}
+	def getMatchesFunctionReference(rdd: RDD[String]): RDD[String] = {
+		// Problem: "isMatch" means "this.isMatch", so we pass all of "this"
+		rdd.map(isMatch)
+	}
+	def getMatchesFieldReference(rdd: RDD[String]): RDD[String] = {
+		// Problem: "query" means "this.query", so we pass all of "this"
+		rdd.map(x => x.split(query))
+	}
+	def getMatchesNoReference(rdd: RDD[String]): RDD[String] = {
+		// Safe: extract just the field we need into a local variable
+		val query_ = this.query
+		rdd.map(x => x.split(query_))
+	}
+}
+
+en esos casos es mejor tener val locales en la función y pasarle a spark solo ése elemento para que el no interprete que se le pas todo el objeto.
+
+:::::::::::::::Common Transformations:::::::::::::::
+map:::: Recordar que arranca en una categoría y termina en la misma eje de RDD  ----> RDD
+y puede ser de un tipo X a uno Y o tipos iguales  RDD[String]  ----> RDD[Boolean]    ......   RDD[String]  ----> RDD[String]  
+Por ejemplo que de una URL saquemos el nombre de la compañía.
+
+flatMap:::: Algunas veces vamos de RDD[String]  ----> RDD[Lis(String)]
+val lines = sc.parallelize(List("hello world", "hi"))
+val words = lines.flatMap(line => line.split(" "))
+words.first() // returns "hello"
+
+instead of ending up with an RDD of lists we have an RDD of the elements in those lists!!!!!!!!!!!!!!
+
+
+
+::::::::::::matematical set operations:
+union
+distinct
+intersection
+subtract
+cartesian(otherRDD):  
+> cartesiado entr dos RDDs diferentes (pero de mismo tipo) Muy usado para identificar similitudes entre todos los posibles pares, como cada expectativa de un usuario en una oferta 
+> O un cartesiano de un RDD con el mismo para ver similitudes entre sus registros
+OJO PARA LA OPERACIONES ENTRE DOS RDDs ES necesarioq ue ambos sean del mismo tipo, es decir 2 RDDs de [String] [Boolean] etc peero no entre tipos 
+diferentes.
+
+
+:::::::::::::::Common Actions:::::::::::::::
+reduce(): Takes a function that operates on two elements of the type in your RDD and returns a new element of the same type.
+RDD.reduce((x,y)=> x+y)
+
+fold():Igual que el reduce pero provee un Zero-Value o valor identidad que se computará con la operación conjunta que estemos realizando eje 0 pra suma (0+1+2), 1 para * (1*1*2*3), lista vacía para concatenación de todos los elementos.
+
+Un caso que encontramos con reduce and fold es el tema de que ambos resuelven al mismo tipo de dato de cada elemento del RDD eje  RDD[Int]  ----> Int
+en el caso de la suma aplica rdd(1,2,3) = 6 peero hay casos en que lo que tenemos es algo así como Rdd[(a,b) (a b) (a b)] y queremos un promedip y resolver a Int Rdd[(a,b) (a b) (a b)] ----> Int...por lo cual lo que podemos hacer es un map que resuelva a  Rdd[(a b 1) (a b 1) (a b 1)] y ya podemos hacer reduce con los 1's
+
+aggregate(): 
+we supply an initial zero value of the type we want to return. We then supply a function to combine 
+the elements from our RDD with the accumulator. Finally, we need to supply a second function to merge 
+two accumulators, given that each node accumulates its own results locally.
+
+val result = input.aggregate((0, 0))(
+(acc, value) => (acc._1 + value, acc._2 + 1),
+(acc1, acc2) => (acc1._1 + acc2._1, acc1._2 + acc2._2))
+val avg = result._1 / result._2.toDouble
+
+
+collect(): lO UTILIZAN mucho para pruebas ya que requiere que todo quepa en el driver context
+take(n): lO UTILIZAN mucho para pruebas ya que puede resultar en un cuello de botella si se trata de grandes cantidades de datos en proceso 
+
+
+top(): Para obtener los top elements , usando el ordenamieno por defecto de los datos (natural) o el que le personalicemos
+
+takeSample(withReplacement, num, seed): take a sample of our data either with or without replacement.
+
+foreach(): Ejecutar una acción sin que se retorna algo a driver context(una inserción en base de datos, enviar un JSOn a un servidor web)
+
+count() 
+countByValue()
+
+
+
+
+
+
+
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
