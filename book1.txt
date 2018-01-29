@@ -115,10 +115,72 @@ count()
 countByValue()
 
 
+:::::::::Converting Between RDD Types::::::::::::::::::::
+mean()
+variance()
+Las dos anteriores aplican para RDDs de tipo numérico
+
+join(): Para RDDs tipos Keys/Value
+
+Para conversiones implicitas necesitamos el import 
+import org.apache.spark.SparkContext._
+
+::::::::PERSISTENCE()::::::::::::::::::::
+usado para no hacer recomputos de un set de datos al que ya le hemos hecho algo pero que luego lo vamos a necesitar
+
+- Lo que hace es algo así como hacer que los nodos guarden en memoria cada computo de la partición que le correspondió.
+- De igual forma es tolerante a falloS en la manera en que si el nodo que había guardado x computo falla entonces spark vuelva a generar el 
+computo perdido
+
+-Se pueden replicar los datos en otros nodos para manejar el tema de fallo en un nodo x 
+
+- Por defecto persist guarda los datos en el Heap de la JVM como objetos deserializados.
+RECORDAR : 
+Que en el Heap se guardan los omjetos en memoria y las clases , dura más porque va desde la ejecución del programa hasta su fin, peeero 
+el del stack solo es en la ejecución del método, valor de la variable.
+El garbage colector al encontrar Objects sin alguna referencia() lo borra
+En el stack se guardan los valores de las variable, primitivos, EJECUCIÓN DE MÉTODOS, es más pequña porque usa el 
+algoritmo de LIFO para liberar memoria, esto puede generar problemas de 
+
+Heap memory is used by all the parts of the application whereas stack memory is used only by one thread of execution.
+
+Whenever an object is created, it’s always stored in the Heap space and stack memory contains the reference to it. Stack memory only contains local primitive variables and reference variables to objects in heap space.
+Objects stored in the heap are globally accessible whereas stack memory can’t be accessed by other threads.
+
+Memory management in stack is done in LIFO manner whereas it’s more complex in Heap memory because it’s used globally. Heap memory is divided into Young-Generation, Old-Generation etc, more details at Java Garbage Collection.
+Stack memory is short-lived whereas heap memory lives from the start till the end of application execution.
+We can use -Xms and -Xmx JVM option to define the startup size and maximum size of heap memory. We can use -Xss to define the stack memory size.
+When stack memory is full, Java runtime throws java.lang.StackOverFlowError whereas if heap memory is full, it throws java.lang.OutOfMemoryError: Java Heap Space error.
+Stack memory size is very less when compared to Heap memory. Because of simplicity in memory allocation (LIFO), 
+stack memory is very fast when compared to heap memory.
+
+
+
+- example:
+val result = input.map(x => x * x)
+result.persist(StorageLevel.DISK_ONLY)
+println(result.count())
+println(result.collect().mkString(","))
 
 
 
 
 
 
-:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::page 65 Working with Key/Value Pairs:::::::::::::::::::::::::::::::::::
+Key/value RDDs are commonly
+used to perform aggregations, and often we will do some initial ETL
+
+Key/value  OR pairs RDDs
+Example 4-2. Creating a pair RDD using the first word as the key in Scala
+val pairs = lines.map(x => (x.split(" ")(0), x))
+
+
+Since pair RDDs contain tuples, we need to pass functions that operate on tuples rather than on individual
+elements. (see page 67 for transformation on Pairs RDDs)
+
+PAGE67
+
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
