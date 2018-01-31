@@ -1,0 +1,22 @@
+::::::::::::::::::::::::2018-01-30:::::::::::::::::::::::::::::::::::::::::
+
+
+:::::Shuffling: What it is and why it's important::::::::::::::::::::::::::::::::::::
+
+Moving the Data on the Network is called Suffling:  Ahora el problema relacionado con esto es LA LATENCIA, que pafecta directamente en el performance, ya que el tiempo de respuesta depende de la conexión 
+entre estos nodos, velocidad de transferencia de información, etc.
+
+En operaciones como groupByKey el shuffle se puede presentar más a menudo , debido que que requiere que los Keys del mismo valor se  coloquen en un mismo noso, entonces si tenemos
+un key en otro nodo que debería estar en el nodo con los Keys de valor 100 por ejemplo entonces sucede el SHUFFLING(MOVING data on the network), la idea PRINCIPAL entonces es reduce esto 
+COMO??
+	- Se recomienda estrategias como usar el reduceByKey, ya que este hace menos shuffling, en el sentido en que PRIMERO realiza la transformacion en el Mapper Side (EVITANDO HACER SUFFLING)
+	- aL FINAL combina los resultados(hace shuffling pero ya es sobre )
+
+
+
+
+:::::::::::::::::partitioning (Partishioning):::::::::::::::::::::::::::
+
+-Cómo sabe spark que los Keys de cierto valor van en un nodo u en otro ?? R/ partitioning :)
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

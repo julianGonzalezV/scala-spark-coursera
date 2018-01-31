@@ -1,0 +1,62 @@
+::::::::::::::::::::::Distributed key/value pairs:::::::::::::::::::::::::::::::::::::
+
+
+Así como en java por ejemplo usamos comunmente list o arrays, EN BIGA DATA LO MÁS COMUN ES 
+KEY/VALUE PAIR y operar sobre estos o manipularlos es un punto clave
+
+-Los dieñadores originales de Map-Reduce se enfocaron mucho en key - values 
+-De las mejores estrategias a la hora de atacar problemas grandes y queder irlos bajandolos de categoría para poderlos tratar
+
+
+-Formas de crear un Pair RDD?, antes recordar que spark tiene un trato muy especial con pair rdds por lo cual es el tipo de RDD que más nos vamos a encontrar
+con map 
+
+
+
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+::2018-01-29::::TRANSFORMATIONS AND ACTIONS ON PAIR RDDs :::::::::::::::::::::::::::::
+
+transformations
+groupByKey:::::::::::: aplicando una funcion que relacione los elementos del RDD con un Key, 
+Un jemeplo en scala collections es el de edades y hacer groupBy, diciendo que cierto rrango es joven, adulto, ninio
+estamos diciendo ya que el Key es un String (joven, adulto, ninio) y cada Key representará un set de elementos de la colección scala que cumpleron la especificación de la función
+
+En Spark es algo parecido pero lo que hace es agrupar toooodos los values que tienen el mismo key
+OJO: Con el estilo de verificaciones como en el min 6:30 en donde se pregunta el resultado de groupByKey de un RDD de eventos, la respuesta era
+QUE NO HACE NADA porque es un Operation OF trasformation  Y NO UN Action(como collect, countByKey)
+
+
+reduceByKey::::::::::::can be thought as a combination of group by key and REDUCE , PERO es mas eficiente que usar ambos por separado!!
+reduceByKey(fun(V,V)=> V):[RDD(K,V)]: Funcion que dada una funcion aplicada a los VALORES RESUELVE A  UN VALOR UNICO, al final retorna un listado de PAIR RDDs 
+
+mapValues::::::::::::Aplica una funcion solo a los values de un Pair RDD
+
+keys:::::::::::: def keys(RDD[k]): Retorna un RDD con los Key de cada tupla, ES UN TRANSFORMATION POR EL HECHO DE QUE PUEDE ESTAR TRABAJANDO CON DEMASIADOS REGISTROS O CANTIDAD DE DATOS
+E IMAGINemos el problema de espacio en memoria si fuera un Action :S
+
+Joins: Es de las operaciones MAS COMUNES EN PAIR RDDS 
+hAY DOS TIPO 
+INNERjoins: pARA key en ambos RDDs
+
+Outer Joins: Para Keys que solo están en uno de los dos (leftOuterJoin, RightOuterJoin)
+
+join(other:RDD)= retorna un Rdd con los elelemntos que contienen el mismo key retunr RDD[(k,(v,W))  v es el value del primer RDD y w el value del segundo RDD , obviamente k es el Key que debe ser igual 
+en ambos RDD, OJO AMBOS RDDS DEBEN TENER KEYS DEL MISMO TIPO 
+
+leftOuterJoin: eje A.leftOuterJoin(B) RETORNA TOOODOS los keys de A que no no necesariamente deban estar en B (option(w)), sí no están en B el resultado sería algo así 
+como (k,(v,None)) pero si hay valor entonces (k,(v,Some(w)))
+RightOuterJoin: Lo contario de leftOuterJoin: (k,(None,w)) pero si hay valor entonces (k,(Some(v),w))
+
+OJO EN VARIAS OCACIONES v ó w pueden ser pairs (x,y) y hace la estructrua un poco larga y difícil de leer
+Algo que también es claro anotar es que muchas veces hay redundancia en los resultados, debido a que un Key está en varias veces en un Rdd y una sola vez en el otro RDD
+
+Action
+
+countByKey:::::::::::::::::::.Counts the number of elements per Key , returning a normal scala Map
+
+Hacer el ejercicio de BUDGET PER ORGANIZER 
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
