@@ -78,7 +78,13 @@ class StackOverflow extends Serializable {
 
   /** Group the questions and answers together */
   def groupedPostings(postings: RDD[Posting]): RDD[(QID, Iterable[(Question, Answer)])] = {
-    ???
+    val questionsRdd: RDD[(HighScore, Question)] = postings.filter(posting => posting.postingType == 1).map(postItem=> (postItem.id, postItem))
+    val answersRdd = postings.filter(posting => posting.postingType == 2).map(postItem=> (postItem.parentId match {
+      case Some(value) => value
+      case None => -1
+    }, postItem))
+
+    questionsRdd.join(answersRdd).groupByKey()
   }
 
 
@@ -97,7 +103,9 @@ class StackOverflow extends Serializable {
       highScore
     }
 
-    ???
+    val rdd1 = grouped.map(item => (item._2.head._1,answerHighScore(item._2.map(x => x._2 ).toArray)))
+
+    rdd1
   }
 
 
