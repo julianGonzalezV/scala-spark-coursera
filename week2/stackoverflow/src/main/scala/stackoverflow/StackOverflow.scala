@@ -25,6 +25,7 @@ object StackOverflow extends StackOverflow {
     val grouped = groupedPostings(raw)
     val scored  = scoredPostings(grouped)
     val vectors = vectorPostings(scored)
+    System.out.println("vectors.count()::::"+vectors.count())
 //    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
 
     val means   = kmeans(sampleVectors(vectors), vectors, debug = true)
@@ -125,7 +126,12 @@ class StackOverflow extends Serializable {
       }
     }
 
-    ???
+    val pairIndexHs = scored.map(item =>  (firstLangInTag(item._1.tags,langs) match {
+      case Some(value) => value * langSpread
+      case None => 0
+    }, item._2) )
+
+    pairIndexHs
   }
 
 
@@ -282,7 +288,7 @@ class StackOverflow extends Serializable {
     val closest = vectors.map(p => (findClosest(p, means), p))
     val closestGrouped = closest.groupByKey()
 
-    val median = closestGrouped.mapValues { vs =>
+    val median: RDD[(HighScore, (String, Double, HighScore, HighScore))] = closestGrouped.mapValues { vs =>
       val langLabel: String   = ??? // most common language in the cluster
       val langPercent: Double = ??? // percent of the questions in the most common language
       val clusterSize: Int    = ???
