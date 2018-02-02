@@ -27,7 +27,7 @@ object StackOverflow extends StackOverflow {
     val vectors = vectorPostings(scored)
     System.out.println("vectors.count()::::"+vectors.count())
 //    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
-
+//MEANS va a ser sampleVectors(vectors) como set inicializador del kmeans algorithm
     val means   = kmeans(sampleVectors(vectors), vectors, debug = true)
     val results = clusterResults(means, vectors)
     printResults(results)
@@ -79,7 +79,7 @@ class StackOverflow extends Serializable {
 
   /** Group the questions and answers together */
   def groupedPostings(postings: RDD[Posting]): RDD[(QID, Iterable[(Question, Answer)])] = {
-    val questionsRdd: RDD[(HighScore, Question)] = postings.filter(posting => posting.postingType == 1).map(postItem=> (postItem.id, postItem))
+    val questionsRdd = postings.filter(posting => posting.postingType == 1).map(postItem=> (postItem.id, postItem))
     val answersRdd = postings.filter(posting => posting.postingType == 2).map(postItem=> (postItem.parentId match {
       case Some(value) => value
       case None => -1
@@ -184,9 +184,67 @@ class StackOverflow extends Serializable {
   //
   //
 
-  /** Main kmeans computation */
+  /** Main kmeans computation
+    * recibe un set  de vectores o puntos y retorna un ser de clusters o conjunto de puntos cercanos
+    * */
   @tailrec final def kmeans(means: Array[(Int, Int)], vectors: RDD[(Int, Int)], iter: Int = 1, debug: Boolean = false): Array[(Int, Int)] = {
+    /*
+    Ojo en la asignación nos piden calcular el newMeans por cada iteración,  ya que estamos dentro de una
+    funcion recursiva inicialmente nos dan :
     val newMeans = means.clone() // you need to compute newMeans
+    PERO LO DEBEMOS IMPLEMENTAR PORQUE SINO ENTONCES VA ENTRAR EN EL LOOP INFINITO, CLARO QUE EN
+    LA LÍNEA  214V IF iter < kmeansMaxIterations  SE CONTRARRESTA ESTO PERO IGUAL HARÍA DEMASIADAS iTERACIONES
+     */
+
+
+    /*
+    Cómo calcularía el newMeans?
+    - means (input) es un vector con valores/puntos iniciales (ver definicion de sampleVectors) aleatorios que sirve como punto de partida
+    para sacar la diatancia euclidiana entre means y newMeans e ir afinando mean, que no es mas que un cluster con registros asociados
+
+    -vectors son PAIRS RDDs donde la primera posición representa el Indice del lenguake multiplicado por langSpread
+    y la segunda posición la respuesta a ése Question con mayor score o votacion
+
+    El proceso a seguir es:
+
+     1- Pick k points called means. This is called initialization.
+
+     2- Associate each input point with the mean that is closest to it.
+      We obtain k clusters of points, and we refer to this process as
+      classifying the points.
+
+     3-  Update each mean to have the average value of the corresponding cluster.
+
+     4- If the k means have significantly changed, go back to step 2.
+      If they did not, we say that the algorithm converged.
+
+     5- The k means represent different clusters -- every point is in the cluster
+      corresponding to the closest mean.
+
+
+     */
+    /*
+    Acá estamos aplicando el paso 2 classifiedLangs es un pair rdd RDD[(index, (LangIndex, HighScore))]
+     que contiene en su primer elemento el index en means que da  la menor distancia
+     Y EN su segundo elemento una tupla del tipo (LangIndex, HighScore)
+     el punto que se resuelve aca es el de la semana 2 :
+     pairing each vector with the index of the closest mean (its cluster)
+
+     */
+    val classifiedLangs = vectors.map(item => (findClosest(item,means),item))
+
+    /**
+      * Estamos diciendo que saque el promedio de los valores en cada cluster o mean
+      * computing the new means by averaging the values of each cluster(punto en week2 assigment)
+      *
+      * groupByKey() devuelve un
+      *  RDD[(meansIndex, Iterable[(LangIndex, HighScore)])]
+      */
+    val averageValuesPerCluster = classifiedLangs.groupByKey().map(())
+
+
+    val newMeans = means(findClosest(item,means)) // you need to compute newMeans
+
 
     // TODO: Fill in the newMeans array
     val distance = euclideanDistance(means, newMeans)
@@ -246,7 +304,8 @@ class StackOverflow extends Serializable {
     sum
   }
 
-  /** Return the closest point */
+  /** Return the closest point
+    * retorna el index de centers cuya distancia euclidiana es menor */
   def findClosest(p: (Int, Int), centers: Array[(Int, Int)]): Int = {
     var bestIndex = 0
     var closest = Double.PositiveInfinity
