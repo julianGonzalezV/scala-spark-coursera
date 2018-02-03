@@ -224,26 +224,26 @@ class StackOverflow extends Serializable {
 
      */
     /*
-    Acá estamos aplicando el paso 2 classifiedLangs es un pair rdd RDD[(index, (LangIndex, HighScore))]
+    Acá estamos aplicando el paso 2 classifiedLangs es un pair rdd RDD[(MeansIndex, (LangIndex, HighScore))]
      que contiene en su primer elemento el index en means que da  la menor distancia
      Y EN su segundo elemento una tupla del tipo (LangIndex, HighScore)
      el punto que se resuelve aca es el de la semana 2 :
      pairing each vector with the index of the closest mean (its cluster)
 
      */
-    val classifiedLangs = vectors.map(item => (findClosest(item,means),item))
+    /**
+      *   * groupByKey() devuelve un
+      *  RDD[(meansIndex, Iterable[(LangIndex, HighScore)])] : listado de (langIndex, HighScore) con su respectivo cluster
+      */
+    val classifiedLangsByCluster: RDD[(HighScore, Iterable[(HighScore, HighScore)])] = vectors.map(item => (findClosest(item,means),item))groupByKey()
 
     /**
       * Estamos diciendo que saque el promedio de los valores en cada cluster o mean
       * computing the new means by averaging the values of each cluster(punto en week2 assigment)
       *
-      * groupByKey() devuelve un
-      *  RDD[(meansIndex, Iterable[(LangIndex, HighScore)])]
+
       */
-    val averageValuesPerCluster = classifiedLangs.groupByKey().map(())
-
-
-    val newMeans = means(findClosest(item,means)) // you need to compute newMeans
+    val newMeans = classifiedLangsByCluster.map(cluster => averageVectors(cluster._2)).collect() // these are the computed newMeans
 
 
     // TODO: Fill in the newMeans array
@@ -344,14 +344,30 @@ class StackOverflow extends Serializable {
   //
   //
   def clusterResults(means: Array[(Int, Int)], vectors: RDD[(LangIndex, HighScore)]): Array[(String, Double, Int, Int)] = {
-    val closest = vectors.map(p => (findClosest(p, means), p))
-    val closestGrouped = closest.groupByKey()
+    val closest: RDD[(HighScore, (LangIndex, HighScore))] = vectors.map(p => (findClosest(p, means), p))
+    val closestGrouped: RDD[(HighScore, Iterable[(LangIndex, HighScore)])] = closest.groupByKey()
 
     val median: RDD[(HighScore, (String, Double, HighScore, HighScore))] = closestGrouped.mapValues { vs =>
-      val langLabel: String   = ??? // most common language in the cluster
-      val langPercent: Double = ??? // percent of the questions in the most common language
-      val clusterSize: Int    = ???
-      val medianScore: Int    = ???
+
+      /**
+        * (a) the dominant programming language in the cluster;
+        */
+      val langIdx = vs.reduce((x, y)=> if (x._2 > y._2) x._1 else y._1 )
+      val langLabel: String   = langs(langIdx/langSpread) // most common language in the cluster
+      /**
+        * (b) the percent of answers that belong to the dominant language;
+        */
+      val langPercent: Double = (vs.filter(x => x._1 == langIdx).size)/(vs.size/100) // percent of the questions in the most common language
+      /**
+        *(c) the size of the cluster (the number of questions it contains);
+        */
+      val clusterSize: Int    = vs.size
+      /**
+        * (d) the median of the highest answer scores.
+
+        */
+
+      val medianScore: Int    =   (vs.filter(x => x._1 == langIdx).reduce(_._2 + _._2) ) / vs.size
 
       (langLabel, langPercent, clusterSize, medianScore)
     }
