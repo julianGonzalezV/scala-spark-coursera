@@ -344,16 +344,19 @@ class StackOverflow extends Serializable {
   //
   //
   def clusterResults(means: Array[(Int, Int)], vectors: RDD[(LangIndex, HighScore)]): Array[(String, Double, Int, Int)] = {
-    val closest: RDD[(HighScore, (LangIndex, HighScore))] = vectors.map(p => (findClosest(p, means), p))
-    val closestGrouped: RDD[(HighScore, Iterable[(LangIndex, HighScore)])] = closest.groupByKey()
+    val closest  = vectors.map(p => (findClosest(p, means), p))
+    val closestGrouped = closest.groupByKey()
 
-    val median: RDD[(HighScore, (String, Double, HighScore, HighScore))] = closestGrouped.mapValues { vs =>
+    val median = closestGrouped.mapValues { vs =>
 
       /**
         * (a) the dominant programming language in the cluster;
+        * NOTA ESTABA COMETIENDO EL SIGUIENTE ERROR vs.reduce((x, y)=> if (x._2 > y._2) x._1 else y._1) POR QUE NO FUNCIONA??
+        * R// porque la firma de reduce es clara y dice que el elemento de retorno debe ser del tipo de la lista que
+        * estoy procesano, recordar que es diferente a map que si la transforma
         */
-      val langIdx = vs.reduce((x, y)=> if (x._2 > y._2) x._1 else y._1 )
-      val langLabel: String   = langs(langIdx/langSpread) // most common language in the cluster
+      val langIdx = vs.reduce((x, y)=> if (x._2 > y._2) x else y)
+      val langLabel: String   = langs(langIdx._1)//langs(vs.reduce((x, y)=> if (x._2 > y._2) x._1 else y._1)) // most common language in the cluster
       /**
         * (b) the percent of answers that belong to the dominant language;
         */
@@ -361,13 +364,13 @@ class StackOverflow extends Serializable {
       /**
         *(c) the size of the cluster (the number of questions it contains);
         */
-      val clusterSize: Int    = vs.size
+      val clusterSize: Int    =  vs.size
       /**
         * (d) the median of the highest answer scores.
-
+          filter devuelve Iterable[(LangIndex, HighScore)]
         */
 
-      val medianScore: Int    =   (vs.filter(x => x._1 == langIdx).reduce(_._2 + _._2) ) / vs.size
+      val medianScore: Int    = vs.filter(x => x._1 == langIdx).map(x => x._2).sum / vs.size
 
       (langLabel, langPercent, clusterSize, medianScore)
     }
