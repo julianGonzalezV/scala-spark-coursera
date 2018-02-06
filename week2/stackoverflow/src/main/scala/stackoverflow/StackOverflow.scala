@@ -4,6 +4,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
+
 import annotation.tailrec
 import scala.reflect.ClassTag
 
@@ -25,7 +26,7 @@ object StackOverflow extends StackOverflow {
     val grouped = groupedPostings(raw)
     val scored  = scoredPostings(grouped)
     val vectors = vectorPostings(scored)
-    System.out.println("vectors.count()::::"+vectors.count())
+System.out.println("vectors.count() "+vectors.count())
 //    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
 //MEANS va a ser sampleVectors(vectors) como set inicializador del kmeans algorithm
     val means   = kmeans(sampleVectors(vectors), vectors, debug = true)
@@ -79,11 +80,12 @@ class StackOverflow extends Serializable {
 
   /** Group the questions and answers together */
   def groupedPostings(postings: RDD[Posting]): RDD[(QID, Iterable[(Question, Answer)])] = {
-    val questionsRdd = postings.filter(posting => posting.postingType == 1).map(postItem=> (postItem.id, postItem))
-    val answersRdd = postings.filter(posting => posting.postingType == 2).map(postItem=> (postItem.parentId match {
-      case Some(value) => value
-      case None => -1
-    }, postItem))
+    val questionsRdd = postings.filter(posting => posting.postingType == 1).map(q => (q.id, q)).persist()
+    val answersRdd  = postings.filter(posting => posting.postingType == 2).map(a => (a.parentId.getOrElse(0), a)).persist()
+    //val v1 = questionsRdd.leftOuterJoin(answersRdd).groupByKey().map(groupV => (groupV._1, groupV._2.map(x=> (x._1,x._2.getOrElse(Posting(0,0,None,None,0,None))))) )
+
+    //RDD[(HighScore, Iterable[(Option[Question], Question)])]
+    //val v2 = questionsRdd.rightOuterJoin(answersRdd).groupByKey().map(groupV => (groupV._1,groupV._2.map(x=>(x._1.getOrElse(Posting(0,0,None,None,0,None)), x._2))))
 
     questionsRdd.join(answersRdd).groupByKey()
   }
@@ -103,6 +105,7 @@ class StackOverflow extends Serializable {
           }
       highScore
     }
+
 
     val rdd1 = grouped.map(item => (item._2.head._1,answerHighScore(item._2.map(x => x._2 ).toArray)))
 
@@ -126,9 +129,10 @@ class StackOverflow extends Serializable {
       }
     }
 
+
     val pairIndexHs = scored.map(item =>  (firstLangInTag(item._1.tags,langs) match {
       case Some(value) => value * langSpread
-      case None => 0
+      case None => 1
     }, item._2) )
 
     pairIndexHs
@@ -164,14 +168,18 @@ class StackOverflow extends Serializable {
     }
 
     val res =
-      if (langSpread < 500)
+      if (langSpread < 500){
         // sample the space regardless of the language
+        System.out.println("SIEMPRE ENTRA:::::::::::::::::::::::::::::::::::::::::::::...")
         vectors.takeSample(false, kmeansKernels, 42)
-      else
+      }
+      else{
         // sample the space uniformly from each language partition
         vectors.groupByKey.flatMap({
           case (lang, vectors) => reservoirSampling(lang, vectors.toIterator, perLang).map((lang, _))
         }).collect()
+      }
+
 
     assert(res.length == kmeansKernels, res.length)
     res
@@ -188,6 +196,7 @@ class StackOverflow extends Serializable {
     * recibe un set  de vectores o puntos y retorna un ser de clusters o conjunto de puntos cercanos
     * */
   @tailrec final def kmeans(means: Array[(Int, Int)], vectors: RDD[(Int, Int)], iter: Int = 1, debug: Boolean = false): Array[(Int, Int)] = {
+
     /*
     Ojo en la asignación nos piden calcular el newMeans por cada iteración,  ya que estamos dentro de una
     funcion recursiva inicialmente nos dan :
@@ -235,16 +244,18 @@ class StackOverflow extends Serializable {
       *   * groupByKey() devuelve un
       *  RDD[(meansIndex, Iterable[(LangIndex, HighScore)])] : listado de (langIndex, HighScore) con su respectivo cluster
       */
-    val classifiedLangsByCluster: RDD[(HighScore, Iterable[(HighScore, HighScore)])] = vectors.map(item => (findClosest(item,means),item))groupByKey()
 
+
+    val classifiedLangsByCluster: RDD[(HighScore, Iterable[(HighScore, HighScore)])] = vectors.map(item => (findClosest(item,means),item)).groupByKey()
+//System.out.println("classifiedLangsByCluster count::::"+classifiedLangsByCluster.count())
     /**
       * Estamos diciendo que saque el promedio de los valores en cada cluster o mean
       * computing the new means by averaging the values of each cluster(punto en week2 assigment)
       *
-
       */
-    val newMeans = classifiedLangsByCluster.map(cluster => averageVectors(cluster._2)).collect() // these are the computed newMeans
 
+    val newMeans = classifiedLangsByCluster.map(cluster => averageVectors(cluster._2)).collect() // these are the computed newMeans
+    //val newMeans = classifiedLangsByCluster.mapValues(averageVectors).map(x=>x._2).collect()
 
     // TODO: Fill in the newMeans array
     val distance = euclideanDistance(means, newMeans)
@@ -294,6 +305,9 @@ class StackOverflow extends Serializable {
 
   /** Return the euclidean distance between two points */
   def euclideanDistance(a1: Array[(Int, Int)], a2: Array[(Int, Int)]): Double = {
+    System.out.println("a1.length "+a1.length + "  a2.length "+a2.length)
+    System.out.println("a1 es "+a1.foreach(print(_)) )
+    System.out.println("a2 es "+a2.foreach(print(_))  )
     assert(a1.length == a2.length)
     var sum = 0d
     var idx = 0

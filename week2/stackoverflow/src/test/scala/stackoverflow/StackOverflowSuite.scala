@@ -34,5 +34,31 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
     assert(instantiatable, "Can't instantiate a StackOverflow object")
   }
 
+//Posting(postingType: Int, id: Int, acceptedAnswer: Option[Int], parentId: Option[QID], score: Int, tags: Option[String])
+  test("groupedPostings test1 ") {
+    val postings = List(
+      Posting(1,1,Some(1),None,1,Some("Java")),
+      Posting(1,2,Some(1),None,1,Some("Java")),
+      Posting(1,3,Some(1),None,1,Some("Java")),
+      Posting(2,4,Some(1),Some(1),1,Some("Java")),
+      Posting(2,5,Some(1),Some(2),1,Some("Java")),
+      Posting(2,6,Some(1),Some(3),1,Some("Java"))
+    )
+    val rdd = sc.parallelize(postings)
+    assert(true)
+  }
+
+
+
+  /*
+  val langs = List("Scala", "Java")
+     val articles = List(
+         WikipediaArticle("1","Groovy is pretty interesting, and so is Erlang"),
+         WikipediaArticle("2","Scala and Java run on the JVM"),
+         WikipediaArticle("3","Scala is not purely functional")
+       )
+     val rdd = sc.parallelize(articles)
+   */
+
 
 }
