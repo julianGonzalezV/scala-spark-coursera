@@ -21,7 +21,7 @@ object StackOverflow extends StackOverflow {
   /** Main function */
   def main(args: Array[String]): Unit = {
 
-    val lines   = sc.textFile("src/main/resources/stackoverflow/stackoverflow.csv")
+    val lines   = sc.textFile("src/main/resources/stackoverflow/stackoverflow.csv").distinct()
     val raw     = rawPostings(lines)
     val grouped = groupedPostings(raw)
     val scored  = scoredPostings(grouped)
@@ -49,7 +49,7 @@ class StackOverflow extends Serializable {
   def langSpread = 50000
   assert(langSpread > 0, "If langSpread is zero we can't recover the language from the input data!")
 
-  /** K-means parameter: Number of clusters */
+  /** K-means parameter: Number of clusters 45*/
   def kmeansKernels = 45
 
   /** K-means parameter: Convergence criteria */
@@ -132,7 +132,7 @@ class StackOverflow extends Serializable {
 
     val pairIndexHs = scored.map(item =>  (firstLangInTag(item._1.tags,langs) match {
       case Some(value) => value * langSpread
-      case None => 1
+      case None => 0
     }, item._2) )
 
     pairIndexHs
@@ -180,7 +180,8 @@ class StackOverflow extends Serializable {
         }).collect()
       }
 
-
+System.out.println("res.length "+res.length )
+    res.foreach(println(_))
     assert(res.length == kmeansKernels, res.length)
     res
   }
@@ -196,7 +197,9 @@ class StackOverflow extends Serializable {
     * recibe un set  de vectores o puntos y retorna un ser de clusters o conjunto de puntos cercanos
     * */
   @tailrec final def kmeans(means: Array[(Int, Int)], vectors: RDD[(Int, Int)], iter: Int = 1, debug: Boolean = false): Array[(Int, Int)] = {
-
+    means.foreach(println(_))
+    System.out.println("--------------------")
+    vectors.foreach(println(_))
     /*
     Ojo en la asignación nos piden calcular el newMeans por cada iteración,  ya que estamos dentro de una
     funcion recursiva inicialmente nos dan :
@@ -246,7 +249,8 @@ class StackOverflow extends Serializable {
       */
 
 
-    val classifiedLangsByCluster: RDD[(HighScore, Iterable[(HighScore, HighScore)])] = vectors.map(item => (findClosest(item,means),item)).groupByKey()
+    val classifiedLangsByCluster: RDD[(HighScore, (HighScore, HighScore))] = vectors.map(item => (findClosest(item,means),item))
+
 //System.out.println("classifiedLangsByCluster count::::"+classifiedLangsByCluster.count())
     /**
       * Estamos diciendo que saque el promedio de los valores en cada cluster o mean
@@ -254,8 +258,15 @@ class StackOverflow extends Serializable {
       *
       */
 
-    val newMeans = classifiedLangsByCluster.map(cluster => averageVectors(cluster._2)).collect() // these are the computed newMeans
+    System.out.println("-------------classifiedLangsByCluster-------")
+    classifiedLangsByCluster.foreach(println(_))
+
+
+    val newMeans = classifiedLangsByCluster.groupByKey().mapValues(averageVectors).map(x=>x._2).collect() // these are the computed newMeans
     //val newMeans = classifiedLangsByCluster.mapValues(averageVectors).map(x=>x._2).collect()
+
+    System.out.println("-------------newMeans-------")
+    newMeans.foreach(println(_))
 
     // TODO: Fill in the newMeans array
     val distance = euclideanDistance(means, newMeans)
@@ -306,8 +317,10 @@ class StackOverflow extends Serializable {
   /** Return the euclidean distance between two points */
   def euclideanDistance(a1: Array[(Int, Int)], a2: Array[(Int, Int)]): Double = {
     System.out.println("a1.length "+a1.length + "  a2.length "+a2.length)
-    System.out.println("a1 es "+a1.foreach(print(_)) )
-    System.out.println("a2 es "+a2.foreach(print(_))  )
+    System.out.println("a1 es::::::::::::::::::::::::::::::::: ")
+    System.out.println(a1.foreach(print(_)) )
+    System.out.println("a2 es::::::::::::::::::::::::::::::::: ")
+    System.out.println(a2.foreach(print(_))  )
     assert(a1.length == a2.length)
     var sum = 0d
     var idx = 0
@@ -359,8 +372,9 @@ class StackOverflow extends Serializable {
   //
   def clusterResults(means: Array[(Int, Int)], vectors: RDD[(LangIndex, HighScore)]): Array[(String, Double, Int, Int)] = {
     val closest  = vectors.map(p => (findClosest(p, means), p))
-    val closestGrouped = closest.groupByKey()
-
+    val closestGrouped: RDD[(HighScore, Iterable[(LangIndex, HighScore)])] = closest.groupByKey()
+    System.out.println("closestGrouped:::::::::::::::::")
+    closestGrouped.foreach(println(_))
     val median = closestGrouped.mapValues { vs =>
 
       /**
@@ -374,7 +388,9 @@ class StackOverflow extends Serializable {
       /**
         * (b) the percent of answers that belong to the dominant language;
         */
-      val langPercent: Double = (vs.filter(x => x._1 == langIdx).size)/(vs.size/100) // percent of the questions in the most common language
+      val size =  vs.size
+      val langPercent: Double = if (size>0 ) ((vs.filter(x => x._1 == langIdx).size)/size)*100 else 0
+
       /**
         *(c) the size of the cluster (the number of questions it contains);
         */
@@ -384,7 +400,7 @@ class StackOverflow extends Serializable {
           filter devuelve Iterable[(LangIndex, HighScore)]
         */
 
-      val medianScore: Int    = vs.filter(x => x._1 == langIdx).map(x => x._2).sum / vs.size
+      val medianScore: Int    = if(size> 0 )  vs.filter(x => x._1 == langIdx).map(x => x._2).sum / size else 0
 
       (langLabel, langPercent, clusterSize, medianScore)
     }
