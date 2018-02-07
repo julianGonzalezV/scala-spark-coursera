@@ -6,6 +6,7 @@ import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
 
 import annotation.tailrec
+import scala.collection.GenTraversableOnce
 import scala.reflect.ClassTag
 
 /** A raw stackoverflow posting, either a question or an answer */
@@ -180,8 +181,6 @@ class StackOverflow extends Serializable {
         }).collect()
       }
 
-System.out.println("res.length "+res.length )
-    res.foreach(println(_))
     assert(res.length == kmeansKernels, res.length)
     res
   }
@@ -197,9 +196,19 @@ System.out.println("res.length "+res.length )
     * recibe un set  de vectores o puntos y retorna un ser de clusters o conjunto de puntos cercanos
     * */
   @tailrec final def kmeans(means: Array[(Int, Int)], vectors: RDD[(Int, Int)], iter: Int = 1, debug: Boolean = false): Array[(Int, Int)] = {
+   /*
+    System.out.println("----------MEANS----------")
     means.foreach(println(_))
-    System.out.println("--------------------")
+    System.out.println("-------------------------")
+
+    System.out.println("----------vectors----------")
     vectors.foreach(println(_))
+    System.out.println("-------------------------")
+    */
+
+    val newMeans = means.clone()
+
+
     /*
     Ojo en la asignación nos piden calcular el newMeans por cada iteración,  ya que estamos dentro de una
     funcion recursiva inicialmente nos dan :
@@ -258,15 +267,39 @@ System.out.println("res.length "+res.length )
       *
       */
 
+    /*
     System.out.println("-------------classifiedLangsByCluster-------")
-    classifiedLangsByCluster.foreach(println(_))
+    classifiedLangsByCluster.foreach(println(_))*/
 
 
-    val newMeans = classifiedLangsByCluster.groupByKey().mapValues(averageVectors).map(x=>x._2).collect() // these are the computed newMeans
+    val newMeans2 = classifiedLangsByCluster.groupByKey().mapValues(averageVectors).map(x=>x._2).collect() // these are the computed newMeans
+
+
+    System.out.println("newMeans2.length "+newMeans2.length + "  newMeans.length "+newMeans.length)
+    System.out.println("newMeans2 es::::::::::::::::::::::::::::::::: ")
+    System.out.println(newMeans2.foreach(print(_)) )
+    System.out.println("newMeans es::::::::::::::::::::::::::::::::: ")
+    System.out.println(newMeans.foreach(print(_))  )
+
+    //val v1 = newMeans.updated(0,(1,2))
+    val vt = Array((0,7),(0,6))
+
+    val v2 = Array.range(0,vt.size).map(index => vt(index))
+
+    /*
+    val vt2 = for (i <- 0 to (vt.size-1)) yield{
+      val  items = newMeans.updated(i,vt(i))
+      items
+    }*/
+
+    System.out.println("nuevo newMeans es::::::::::::::::::::::::::::::::: ")
+    System.out.println(v2.foreach(print(_))  )
+
     //val newMeans = classifiedLangsByCluster.mapValues(averageVectors).map(x=>x._2).collect()
 
+    /*
     System.out.println("-------------newMeans-------")
-    newMeans.foreach(println(_))
+    newMeans.foreach(println(_))*/
 
     // TODO: Fill in the newMeans array
     val distance = euclideanDistance(means, newMeans)
@@ -316,11 +349,12 @@ System.out.println("res.length "+res.length )
 
   /** Return the euclidean distance between two points */
   def euclideanDistance(a1: Array[(Int, Int)], a2: Array[(Int, Int)]): Double = {
+    /*
     System.out.println("a1.length "+a1.length + "  a2.length "+a2.length)
     System.out.println("a1 es::::::::::::::::::::::::::::::::: ")
     System.out.println(a1.foreach(print(_)) )
     System.out.println("a2 es::::::::::::::::::::::::::::::::: ")
-    System.out.println(a2.foreach(print(_))  )
+    System.out.println(a2.foreach(print(_))  )*/
     assert(a1.length == a2.length)
     var sum = 0d
     var idx = 0

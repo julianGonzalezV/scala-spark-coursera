@@ -21,9 +21,9 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
 
     override val langs =
       List(
-        "JavaScript","Java","PHP")
+        "Java")
     override def langSpread = 50000
-    override def kmeansKernels = 1
+    override def kmeansKernels = 3
     override def kmeansEta: Double = 20.0D
     override def kmeansMaxIterations = 120
   }
@@ -38,6 +38,7 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
     assert(instantiatable, "Can't instantiate a StackOverflow object")
   }
 
+  /*
 //Posting(postingType: Int, id: Int, acceptedAnswer: Option[Int], parentId: Option[QID], score: Int, tags: Option[String])
   test("groupedPostings test1 ") {
     import StackOverflow._
@@ -139,7 +140,7 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
     val sampleV = testObject.sampleVectors(vectorsP)
     sampleV.foreach(println(_))
     assert(true)
-  }
+  }*/
 
 
   test("groupedPostings test 5 ") {
@@ -152,8 +153,8 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
       Posting(2,4,Some(1),Some(1),1,Some("Java")),
       Posting(2,5,Some(1),Some(1),5,Some("Java")),
       Posting(2,6,Some(1),Some(1),10,Some("Java")),
-      Posting(2,7,Some(1),Some(2),5,Some("Java")),
-      Posting(2,8,Some(1),Some(3),7,Some("Java")),
+      Posting(2,7,Some(1),Some(2),1,Some("Java")),
+      Posting(2,8,Some(1),Some(3),1,Some("Java")),
       Posting(2,9,Some(1),None,1,Some("Java")),
       Posting(2,10,Some(1),None,1,Some("Java"))
     )
@@ -170,7 +171,7 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
     assert(true)
   }
 
-
+/*
   test("Print Results") {
     import StackOverflow._
     val postings = List(
@@ -181,8 +182,8 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
       Posting(2,4,Some(1),Some(1),1,Some("Java")),
       Posting(2,5,Some(1),Some(1),5,Some("Java")),
       Posting(2,6,Some(1),Some(1),10,Some("Java")),
-      Posting(2,7,Some(1),Some(2),5,Some("Java")),
-      Posting(2,8,Some(1),Some(3),7,Some("Java")),
+      Posting(2,7,Some(1),Some(2),1,Some("Java")),
+      Posting(2,8,Some(1),Some(3),1,Some("Java")),
       Posting(2,9,Some(1),None,1,Some("Java")),
       Posting(2,10,Some(1),None,1,Some("Java"))
     )
@@ -199,6 +200,6 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
     prnt.foreach(println(_))
     assert(true)
   }
-
+*/
 
 }
