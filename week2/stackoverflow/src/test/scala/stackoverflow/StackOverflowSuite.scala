@@ -21,7 +21,7 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
 
     override val langs =
       List(
-        "Java")
+        "JavaScript", "Java", "PHP")
     override def langSpread = 50000
     override def kmeansKernels = 3
     override def kmeansEta: Double = 20.0D
@@ -146,17 +146,27 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
   test("groupedPostings test 5 ") {
     import StackOverflow._
     val postings = List(
+
+      //Questions per language
       Posting(1,1,Some(1),None,1,Some("Java")),
-      Posting(1,2,Some(1),None,1,Some("Java")),
-      Posting(1,3,Some(1),None,1,Some("Java")),
-      Posting(1,11,Some(1),None,1,Some("Scala")),
+      Posting(1,2,Some(1),None,1,Some("JavaScript")),
+      Posting(1,3,Some(1),None,1,Some("PHP")),
+
+      //java answers
       Posting(2,4,Some(1),Some(1),1,Some("Java")),
       Posting(2,5,Some(1),Some(1),5,Some("Java")),
       Posting(2,6,Some(1),Some(1),10,Some("Java")),
-      Posting(2,7,Some(1),Some(2),1,Some("Java")),
-      Posting(2,8,Some(1),Some(3),1,Some("Java")),
-      Posting(2,9,Some(1),None,1,Some("Java")),
-      Posting(2,10,Some(1),None,1,Some("Java"))
+
+    //JavaScript answers
+      Posting(2,7,Some(1),Some(2),2,Some("JavaScript")),
+      Posting(2,8,Some(1),Some(2),4,Some("JavaScript")),
+      Posting(2,9,Some(1),Some(2),6,Some("JavaScript")),
+
+    //PHP answers
+      Posting(2,10,Some(1),Some(3),8,Some("PHP")),
+      Posting(2,11,Some(1),Some(3),10,Some("PHP")),
+      Posting(2,12,Some(1),Some(3),12,Some("PHP"))
+
     )
 
 
@@ -167,6 +177,8 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
     val vectorsP = testObject.vectorPostings(scoredP)
     val sampleV = testObject.sampleVectors(vectorsP)
     val meansP   = testObject.kmeans(sampleV, vectorsP, debug = true)
+    val results = testObject.clusterResults(meansP, vectorsP)
+    testObject.printResults(results)
     meansP.foreach(println(_))
     assert(true)
   }

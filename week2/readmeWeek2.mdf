@@ -59,4 +59,103 @@ countByKey:::::::::::::::::::.Counts the number of elements per Key , returning 
 
 Hacer el ejercicio de BUDGET PER ORGANIZER 
 
+
+
+
+
+
+Notas que iban dentro de la función @tailrec final def kmeans(...
+ahora las coloco acá para que no se vea tan sucion el código 
+
+:::::::::::::::::::::::::::::::::::::::INICIO:::::::::::::::::::::::::::::::
+/*System.out.println("----------MEANS----------")
+    means.foreach(println(_))
+    System.out.println("-------------------------")
+
+    System.out.println("----------vectors----------")
+    vectors.foreach(println(_))
+    System.out.println("-------------------------")
+*/
+
+
+
+
+
+    /*
+    Ojo en la asignación nos piden calcular el newMeans por cada iteración,  ya que estamos dentro de una
+    funcion recursiva inicialmente nos dan :
+    val newMeans = means.clone() // you need to compute newMeans
+    PERO LO DEBEMOS IMPLEMENTAR PORQUE SINO ENTONCES VA ENTRAR EN EL LOOP INFINITO, CLARO QUE EN
+    LA LÍNEA  214V IF iter < kmeansMaxIterations  SE CONTRARRESTA ESTO PERO IGUAL HARÍA DEMASIADAS iTERACIONES
+     */
+
+
+    /*
+    Cómo calcularía el newMeans?
+    - means (input) es un vector con valores/puntos iniciales (ver definicion de sampleVectors) aleatorios que sirve como punto de partida
+    para sacar la diatancia euclidiana entre means y newMeans e ir afinando mean, que no es mas que un cluster con registros asociados
+
+    -vectors son PAIRS RDDs donde la primera posición representa el Indice del lenguake multiplicado por langSpread
+    y la segunda posición la respuesta a ése Question con mayor score o votacion
+
+    El proceso a seguir es:
+
+     1- Pick k points called means. This is called initialization.
+
+     2- Associate each input point with the mean that is closest to it.
+      We obtain k clusters of points, and we refer to this process as
+      classifying the points.
+
+     3-  Update each mean to have the average value of the corresponding cluster.
+
+     4- If the k means have significantly changed, go back to step 2.
+      If they did not, we say that the algorithm converged.
+
+     5- The k means represent different clusters -- every point is in the cluster
+      corresponding to the closest mean.
+
+
+     */
+    /*
+    Acá estamos aplicando el paso 2 classifiedLangs es un pair rdd RDD[(MeansIndex, (LangIndex, HighScore))]
+     que contiene en su primer elemento el index en means que da  la menor distancia
+     Y EN su segundo elemento una tupla del tipo (LangIndex, HighScore)
+     el punto que se resuelve aca es el de la semana 2 :
+     pairing each vector with the index of the closest mean (its cluster)
+
+     */
+
+
+/*
+
+    System.out.println("newMeans2.length "+newMeans2.length + "  newMeans.length "+newMeans.length)
+    System.out.println("newMeans2 es::::::::::::::::::::::::::::::::: ")
+    System.out.println(newMeans2.foreach(print(_)) )
+    System.out.println("newMeans es::::::::::::::::::::::::::::::::: ")
+    System.out.println(newMeans.foreach(print(_))  )
+
+    //val v1 = newMeans.updated(0,(1,2))
+    val vt = Array((0,7),(0,6))
+*/
+
+
+/*
+    val vt2 = for (i <- 0 to (vt.size-1)) yield{
+      val  items = newMeans.updated(i,vt(i))
+      items
+    }*/
+/*
+
+    System.out.println("nuevo newMeans es::::::::::::::::::::::::::::::::: ")
+    System.out.println(newMeans.foreach(print(_))  )
+*/
+
+    //val newMeans = classifiedLangsByCluster.mapValues(averageVectors).map(x=>x._2).collect()
+
+    /*
+    System.out.println("-------------newMeans-------")
+    newMeans.foreach(println(_))*/
+:::::::::::::::::::::::::::::::::::::::FIN:::::::::::::::::::::::::::::::
+
+
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
