@@ -25,9 +25,9 @@ object StackOverflow extends StackOverflow {
     val lines   = sc.textFile("src/main/resources/stackoverflow/stackoverflow.csv").persist()
     val raw     = rawPostings(lines).persist()
     val grouped = groupedPostings(raw).persist()
-    val scored  = scoredPostings(grouped).sample(true,0.1,0)
+    val scored  = scoredPostings(grouped)//.sample(true,0.1,0)
     val vectors = vectorPostings(scored).persist()
-System.out.println("vectors.count() "+vectors.count())
+//System.out.println("vectors.count() "+vectors.count())
 //    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
 //MEANS va a ser sampleVectors(vectors) como set inicializador del kmeans algorithm
     val means   = kmeans(sampleVectors(vectors), vectors, debug = true)
@@ -192,12 +192,17 @@ class StackOverflow extends Serializable {
     * recibe un set  de vectores o puntos y retorna un ser de clusters o conjunto de puntos cercanos
     * */
   @tailrec final def kmeans(means: Array[(Int, Int)], vectors: RDD[(Int, Int)], iter: Int = 1, debug: Boolean = false): Array[(Int, Int)] = {
+    System.out.println("MEANS ES::::::::::::::::::::::::::::::::: ")
+    System.out.println(means.foreach(print(_))  )
 
     val newMeans = means.clone()
-    val classifiedLangsByCluster: RDD[(HighScore, (HighScore, HighScore))] = vectors.map(item => (findClosest(item,means),item)).persist()
-    val newMeans2 = classifiedLangsByCluster.groupByKey().mapValues(averageVectors).map(x=>x._2).collect() // these are the computed newMeans
-    System.out.println("antes newMeans es::::::::::::::::::::::::::::::::: ")
-    System.out.println(newMeans.foreach(print(_))  )
+    val classifiedLangsByCluster: RDD[(HighScore, Iterable[(HighScore, HighScore)])] = vectors.map(item => (findClosest(item,means),item)).groupByKey().persist()
+
+
+
+    val newMeans2 = classifiedLangsByCluster.mapValues(averageVectors).map(x=>x._2).collect() // these are the computed newMeans
+    System.out.println("newMeans2 es:::::::::::::::::::::::::::::::::tamanio "+newMeans2.size)
+    System.out.println(newMeans2.foreach(print(_)))
 
     Array.range(0,newMeans2.size).map(index => newMeans.update(index,newMeans2(index)) )
 
@@ -268,7 +273,7 @@ class StackOverflow extends Serializable {
   }
 
   /** Return the closest point
-    * retorna el index de centers cuya distancia euclidiana es menor */
+    * retorna el index (posicion) de centers cuya distancia euclidiana es menor */
   def findClosest(p: (Int, Int), centers: Array[(Int, Int)]): Int = {
     var bestIndex = 0
     var closest = Double.PositiveInfinity
