@@ -22,11 +22,11 @@ object StackOverflow extends StackOverflow {
   /** Main function */
   def main(args: Array[String]): Unit = {
 
-    val lines   = sc.textFile("src/main/resources/stackoverflow/stackoverflow.csv").persist()
-    val raw     = rawPostings(lines).persist()
-    val grouped = groupedPostings(raw).persist()
+    val lines   = sc.textFile("src/main/resources/stackoverflow/stackoverflow.csv")
+    val raw     = rawPostings(lines)
+    val grouped = groupedPostings(raw)
     val scored  = scoredPostings(grouped)//.sample(true,0.1,0)
-    val vectors = vectorPostings(scored).persist()
+    val vectors = vectorPostings(scored).cache()
 //System.out.println("vectors.count() "+vectors.count())
 //    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
 //MEANS va a ser sampleVectors(vectors) como set inicializador del kmeans algorithm
@@ -192,22 +192,21 @@ class StackOverflow extends Serializable {
     * recibe un set  de vectores o puntos y retorna un ser de clusters o conjunto de puntos cercanos
     * */
   @tailrec final def kmeans(means: Array[(Int, Int)], vectors: RDD[(Int, Int)], iter: Int = 1, debug: Boolean = false): Array[(Int, Int)] = {
-    System.out.println("MEANS ES::::::::::::::::::::::::::::::::: ")
-    System.out.println(means.foreach(print(_))  )
+
 
     val newMeans = means.clone()
-    val classifiedLangsByCluster: RDD[(HighScore, Iterable[(HighScore, HighScore)])] = vectors.map(item => (findClosest(item,means),item)).groupByKey().persist()
+    //groupByKey() retruns a RDD[(HighScore, Iterable[(HighScore, HighScore)])]
+    val classifiedLangsByCluster = vectors.map(item => (findClosest(item,means),item)).groupByKey().persist()
+
+    val newMeans2 = classifiedLangsByCluster.mapValues(averageVectors).cache().collect() // these are the computed newMeans
+    /*System.out.println("newMeans2 es:::::::::::::::::::::::::::::::::tamanio "+newMeans2.size)
+    System.out.println(newMeans2.foreach(print(_)))*/
+
+    newMeans2.foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+
+    //Array.range(0,newMeans2.size).map(index => newMeans.update(index,newMeans2(index)) )
 
 
-
-    val newMeans2 = classifiedLangsByCluster.mapValues(averageVectors).map(x=>x._2).collect() // these are the computed newMeans
-    System.out.println("newMeans2 es:::::::::::::::::::::::::::::::::tamanio "+newMeans2.size)
-    System.out.println(newMeans2.foreach(print(_)))
-
-    Array.range(0,newMeans2.size).map(index => newMeans.update(index,newMeans2(index)) )
-
-    System.out.println("nuevo newMeans es::::::::::::::::::::::::::::::::: ")
-    System.out.println(newMeans.foreach(print(_))  )
     // TODO: Fill in the newMeans array
     val distance = euclideanDistance(means, newMeans)
 
@@ -313,12 +312,16 @@ class StackOverflow extends Serializable {
   //
   def clusterResults(means: Array[(Int, Int)], vectors: RDD[(LangIndex, HighScore)]): Array[(String, Double, Int, Int)] = {
     val closest  = vectors.map(p => (findClosest(p, means), p))
-    System.out.println("closest:::::::::::::::::")
-    closest.foreach(println(_))
+    /*System.out.println("closest:::::::::::::::::")
+    closest.foreach(println(_))*/
+
+    System.out.println("means results:::::::::::::::::")
+    means.foreach(println(_))
     val closestGrouped: RDD[(HighScore, Iterable[(LangIndex, HighScore)])] = closest.groupByKey()
-    System.out.println("closestGrouped:::::::::::::::::")
-    closestGrouped.foreach(println(_))
-    val median = closestGrouped.mapValues { vs =>
+    /*System.out.println("closestGrouped:::::::::::::::::")
+    closestGrouped.foreach(println(_))*/
+
+    val median: RDD[(HighScore, (String, Double, HighScore, HighScore))] = closestGrouped.mapValues { vs =>
 
       /**
         * (a) the dominant programming language in the cluster;
@@ -326,13 +329,13 @@ class StackOverflow extends Serializable {
         * R// porque la firma de reduce es clara y dice que el elemento de retorno debe ser del tipo de la lista que
         * estoy procesano, recordar que es diferente a map que si la transforma
         */
-      val langIdx = vs.reduce((x, y)=> if (x._2 > y._2) x else y)
+      val langIdx: (LangIndex, HighScore) = vs.reduce((x, y)=> if (x._2 > y._2) x else y)
       val langLabel: String   = langs(langIdx._1/langSpread)//langs(vs.reduce((x, y)=> if (x._2 > y._2) x._1 else y._1)) // most common language in the cluster
       /**
         * (b) the percent of answers that belong to the dominant language;
+        * : Iterable[(LangIndex, HighScore)]
         */
-      val size =  vs.size
-      val langPercent: Double = if (size>0 ) ((vs.filter(x => x._1 == langIdx).size)/size)*100 else 0
+      val langPercent = if (vs.size>0 ) (means.filter(x => x._1 == langIdx._1).size/means.size)*100 else 0
 
       /**
         *(c) the size of the cluster (the number of questions it contains);
@@ -343,7 +346,11 @@ class StackOverflow extends Serializable {
           filter devuelve Iterable[(LangIndex, HighScore)]
         */
 
-      val medianScore: Int    = if(size> 0 )  vs.filter(x => x._1 == langIdx).map(x => x._2).sum / size else 0
+      val median = vs.toList.sortBy(_._2).map(x  => x._2)
+    /*  println("median:" +Math.floor(clusterSize/2))
+      println("median records:"+median)
+      median.foreach(print(_))*/
+      val medianScore = median(Math.floor(clusterSize/2).toInt )
 
       (langLabel, langPercent, clusterSize, medianScore)
     }
