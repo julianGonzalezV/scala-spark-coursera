@@ -4,6 +4,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 
 import annotation.tailrec
 import scala.collection.GenTraversableOnce
@@ -26,11 +27,11 @@ object StackOverflow extends StackOverflow {
     val raw     = rawPostings(lines)
     val grouped = groupedPostings(raw)
     val scored  = scoredPostings(grouped)//.sample(true,0.1,0)
-    val vectors = vectorPostings(scored).cache()
-//System.out.println("vectors.count() "+vectors.count())
+    val vectors = vectorPostings(scored).persist()
+System.out.println("vectors.count() "+vectors.count())
 //    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
 //MEANS va a ser sampleVectors(vectors) como set inicializador del kmeans algorithm
-    val means   = kmeans(sampleVectors(vectors), vectors, debug = true)
+    val means   = kmeans(sampleVectors(vectors), vectors, debug = false)
     val results = clusterResults(means, vectors)
     printResults(results)
   }
@@ -81,8 +82,8 @@ class StackOverflow extends Serializable {
 
   /** Group the questions and answers together */
   def groupedPostings(postings: RDD[Posting]): RDD[(QID, Iterable[(Question, Answer)])] = {
-    val questionsRdd = postings.filter(posting => posting.postingType == 1).map(q => (q.id, q)).persist()
-    val answersRdd  = postings.filter(posting => posting.postingType == 2).map(a => (a.parentId.getOrElse(0), a)).persist()
+    val questionsRdd = postings.filter(posting => posting.postingType == 1).map(q => (q.id, q))
+    val answersRdd  = postings.filter(posting => posting.postingType == 2).map(a => (a.parentId.getOrElse(0), a))
     //val v1 = questionsRdd.leftOuterJoin(answersRdd).groupByKey().map(groupV => (groupV._1, groupV._2.map(x=> (x._1,x._2.getOrElse(Posting(0,0,None,None,0,None))))) )
 
     //RDD[(HighScore, Iterable[(Option[Question], Question)])]
@@ -196,13 +197,17 @@ class StackOverflow extends Serializable {
 
     val newMeans = means.clone()
     //groupByKey() retruns a RDD[(HighScore, Iterable[(HighScore, HighScore)])]
-    val classifiedLangsByCluster = vectors.map(item => (findClosest(item,means),item)).groupByKey().persist()
+   // val classifiedLangsByCluster = vectors.map(item => (findClosest(item,means),item)).groupByKey().persist()
 
-    val newMeans2 = classifiedLangsByCluster.mapValues(averageVectors).cache().collect() // these are the computed newMeans
+    //val v2 = vectors.map(item => (findClosest(item,means),item)).groupByKey().mapValues(averageVectors).cache()
+
+    // these are the computed newMeans
     /*System.out.println("newMeans2 es:::::::::::::::::::::::::::::::::tamanio "+newMeans2.size)
     System.out.println(newMeans2.foreach(print(_)))*/
 
-    newMeans2.foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+    vectors.map(item => (findClosest(item,means),item)).groupByKey()
+      .mapValues(averageVectors)
+      .foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
 
     //Array.range(0,newMeans2.size).map(index => newMeans.update(index,newMeans2(index)) )
 
@@ -315,8 +320,6 @@ class StackOverflow extends Serializable {
     /*System.out.println("closest:::::::::::::::::")
     closest.foreach(println(_))*/
 
-    System.out.println("means results:::::::::::::::::")
-    means.foreach(println(_))
     val closestGrouped: RDD[(HighScore, Iterable[(LangIndex, HighScore)])] = closest.groupByKey()
     /*System.out.println("closestGrouped:::::::::::::::::")
     closestGrouped.foreach(println(_))*/
@@ -335,7 +338,7 @@ class StackOverflow extends Serializable {
         * (b) the percent of answers that belong to the dominant language;
         * : Iterable[(LangIndex, HighScore)]
         */
-      val langPercent = if (vs.size>0 ) (means.filter(x => x._1 == langIdx._1).size/means.size)*100 else 0
+      val langPercent = if (vs.size>0 ) (vs.filter(x => x._1 == langIdx._1).size/vs.size)*100 else 0
 
       /**
         *(c) the size of the cluster (the number of questions it contains);
