@@ -28,7 +28,7 @@ object StackOverflow extends StackOverflow {
     val grouped = groupedPostings(raw)
     val scored  = scoredPostings(grouped)//.sample(true,0.1,0)
     val vectors = vectorPostings(scored).persist()
-System.out.println("vectors.count() "+vectors.count())
+//System.out.println("vectors.count() "+vectors.count())
 //    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
 //MEANS va a ser sampleVectors(vectors) como set inicializador del kmeans algorithm
     val means   = kmeans(sampleVectors(vectors), vectors, debug = false)
@@ -320,7 +320,7 @@ class StackOverflow extends Serializable {
     /*System.out.println("closest:::::::::::::::::")
     closest.foreach(println(_))*/
 
-    val closestGrouped: RDD[(HighScore, Iterable[(LangIndex, HighScore)])] = closest.groupByKey()
+    val closestGrouped = closest.groupByKey()
     /*System.out.println("closestGrouped:::::::::::::::::")
     closestGrouped.foreach(println(_))*/
 
@@ -346,15 +346,19 @@ class StackOverflow extends Serializable {
       val clusterSize: Int    =  vs.size
       /**
         * (d) the median of the highest answer scores.
-          filter devuelve Iterable[(LangIndex, HighScore)]
+          vs es de tipo  Iterable[(LangIndex, HighScore)]
         */
 
       val median = vs.toList.sortBy(_._2).map(x  => x._2)
     /*  println("median:" +Math.floor(clusterSize/2))
       println("median records:"+median)
       median.foreach(print(_))*/
-      val medianScore = {if(vs.size % 2 == 0) (median(Math.floor(clusterSize/2).toInt) + median(Math.floor(clusterSize/2).toInt + 1)) / 2
-                          else median(Math.floor(clusterSize/2).toInt + 1) }
+      val medianScore = {
+        if((vs.size % 2) == 0) {
+          Math.round((median(Math.floor(clusterSize/2).toInt) + median(Math.floor(clusterSize/2).toInt + 1)) / 2)
+        }
+        else median(Math.floor(clusterSize/2).toInt + 1)
+      }
 
 
       (langLabel, langPercent, clusterSize, medianScore)
