@@ -353,7 +353,9 @@ class StackOverflow extends Serializable {
     /*  println("median:" +Math.floor(clusterSize/2))
       println("median records:"+median)
       median.foreach(print(_))*/
-      val medianScore = median(Math.floor(clusterSize/2).toInt )
+      val medianScore = {if(vs.size % 2 == 0) (median(Math.floor(clusterSize/2).toInt) + median(Math.floor(clusterSize/2).toInt + 1)) / 2
+                          else median(Math.floor(clusterSize/2).toInt + 1) }
+
 
       (langLabel, langPercent, clusterSize, medianScore)
     }
