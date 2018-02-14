@@ -355,9 +355,9 @@ class StackOverflow extends Serializable {
       median.foreach(print(_))*/
       val medianScore = {
         if((vs.size % 2) == 0) {
-          Math.round((median(Math.floor(clusterSize/2).toInt) + median(Math.floor(clusterSize/2).toInt + 1)) / 2)
+          Math.round((median((clusterSize/2)-1) + median(clusterSize/2)) / 2)
         }
-        else median(Math.floor(clusterSize/2).toInt + 1)
+        else median(Math.floor(clusterSize/2).toInt)
       }
 
 
