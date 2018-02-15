@@ -141,6 +141,7 @@ class StackOverflow extends Serializable {
   /** Sample the vectors */
   def sampleVectors(vectors: RDD[(LangIndex, HighScore)]): Array[(Int, Int)] = {
 
+    System.out.print("langs.length:::::::::::::"+langs.length+"   kmeansKernels:::"+kmeansKernels)
     assert(kmeansKernels % langs.length == 0, "kmeansKernels should be a multiple of the number of languages studied.")
     val perLang = kmeansKernels / langs.length
 
@@ -204,10 +205,8 @@ class StackOverflow extends Serializable {
     // these are the computed newMeans
     /*System.out.println("newMeans2 es:::::::::::::::::::::::::::::::::tamanio "+newMeans2.size)
     System.out.println(newMeans2.foreach(print(_)))*/
-
     vectors.map(item => (findClosest(item,means),item)).groupByKey()
-      .mapValues(averageVectors)
-      .foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+      .mapValues(averageVectors).foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
 
     //Array.range(0,newMeans2.size).map(index => newMeans.update(index,newMeans2(index)) )
 
