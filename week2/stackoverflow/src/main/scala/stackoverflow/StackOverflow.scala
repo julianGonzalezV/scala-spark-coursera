@@ -132,8 +132,8 @@ class StackOverflow extends Serializable {
 
     val pairIndexHs = scored.map(item =>  (firstLangInTag(item._1.tags,langs) match {
       case Some(value) => value * langSpread
-      case None => 0
-    }, item._2) )
+      case None => -1
+    }, item._2) ).filter(x   => x._1 != -1)
 
     pairIndexHs
   }
@@ -204,12 +204,27 @@ class StackOverflow extends Serializable {
     //val v2 = vectors.map(item => (findClosest(item,means),item)).groupByKey().mapValues(averageVectors).cache()
 
     // these are the computed newMeans
-    /*System.out.println("newMeans2 es:::::::::::::::::::::::::::::::::tamanio "+newMeans2.size)
-    System.out.println(newMeans2.foreach(print(_)))*/
-    vectors.map(item => (findClosest(item,means),item)).groupByKey()
-      .mapValues(averageVectors).foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+   /* System.out.println("means ANTES  es:::::::::::::::::::::::::::::::::tamanio "+means.size)
+    System.out.println(means.foreach(print(_)))*/
 
-    //Array.range(0,newMeans2.size).map(index => newMeans.update(index,newMeans2(index)) )
+   /* val agrupados = vectors.map(item => (findClosest(item,means),item)).groupByKey()
+    System.out.println("agrupados:::::::::::::::::::::::::::::::::tamanio ")
+    System.out.println(agrupados.foreach(print(_)))*/
+
+    //val groupedList2 = vectors.map(item => (findClosest(item,means),item)).reduceByKey((x,y)=>x)
+
+      //.mapValues(averageVectors).collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+
+    val groupedList = vectors.map(item => (findClosest(item,means),item)).groupByKey()
+      .mapValues(averageVectors).collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+
+
+
+
+   // groupedList.collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+
+/*    System.out.println("newMeans DESPUES  es:::::::::::::::::::::::::::::::::tamanio "+newMeans.size)
+    System.out.println(newMeans.foreach(print(_)))*/
 
 
     // TODO: Fill in the newMeans array
