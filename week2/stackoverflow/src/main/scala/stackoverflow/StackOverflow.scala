@@ -16,8 +16,7 @@ case class Posting(postingType: Int, id: Int, acceptedAnswer: Option[Int], paren
 
 /** The main class */
 object StackOverflow extends StackOverflow {
-
-  @transient lazy val conf: SparkConf = new SparkConf().setMaster("local").setAppName("StackOverflow")
+  @transient lazy val conf: SparkConf = new SparkConf().setAppName("StackOverflow").setMaster("local[5]").set("spark.executor.memory", "10g")
   @transient lazy val sc: SparkContext = new SparkContext(conf)
 
   /** Main function */
@@ -214,11 +213,20 @@ class StackOverflow extends Serializable {
     //val groupedList2 = vectors.map(item => (findClosest(item,means),item)).reduceByKey((x,y)=>x)
 
       //.mapValues(averageVectors).collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+    //RDD[(HighScore, (HighScore, HighScore))]
+    /*val groupedList  = vectors.map(item => (findClosest(item,means),(1,item)))
+      .reduceByKey((x,y)=> (x._1+y._1,(x._2._1 + y._2._1,x._2._2 + y._2._2))).mapValues(x => (x._2._1/x._1, x._2._2/x._1))
+      .collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))*/
 
-    val groupedList = vectors.map(item => (findClosest(item,means),item)).groupByKey()
+     /* .foldByKey((0,0))((x,y)=> averageVectors(Iterable((x._1,x._2),(y._1,y._2))))
+      .collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+*/
+
+      vectors.groupBy(findClosest(_, means))
       .mapValues(averageVectors).collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
-
-
+/*
+     vectors.map(pairV => (findClosest(pairV,means), pairV)).aggregateByKey((0,0))((x,y)=>(x._1 + y._1, x._2 + 1), (x,y) => (x._1 + y._1, x._2 + y._2))
+       .mapValues(x => (x._2._1/x._1, x._2._2/x._1))*/
 
 
    // groupedList.collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
