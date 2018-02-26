@@ -16,7 +16,7 @@ case class Posting(postingType: Int, id: Int, acceptedAnswer: Option[Int], paren
 
 /** The main class */
 object StackOverflow extends StackOverflow {
-  @transient lazy val conf: SparkConf = new SparkConf().setAppName("StackOverflow").setMaster("local[3]").set("spark.executor.memory", "4g")
+  @transient lazy val conf: SparkConf = new SparkConf().setAppName("StackOverflow").setMaster("local[1]")
   @transient lazy val sc: SparkContext = new SparkContext(conf)
 
   /** Main function */
