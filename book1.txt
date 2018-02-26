@@ -183,4 +183,149 @@ elements. (see page 67 for transformation on Pairs RDDs)
 PAGE67
 
 
-::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:::page 75:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+rdd.reduceByKey(func) produces the same RDD as rdd.groupBy
+Key().mapValues(value => value.reduce(func)), seindo reduce más eficiente
+
+
+
+Unas de las razones para no particionae es SI POR EJEMPLO Sí lel rdd is scanned only once entonces el particionamiento no aportará en nada 
+
+
+ 
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+Data Partitioning (Advanced)
+Se muestran las ventajas de .partitionBy(new HashPartitioner(100), make this at least as large
+as the number of cores in your cluster) sobretodo en JOINs (ver pg 81 o 62  en el libro)
+, en resumen es algo así como que en el momento de hacer jpin y distribuir los datos NO distribuye lo que ya se había distribuido antes sin contro el OTHER rdd del jooin
+lo anterior es importante por le tema de LATENCY 
+
+
+:::::::::::::::::::::.CHAPTER 3 Loading and Saving Your Data ::::::::::::::::::::::::::::::::::::::::::::
+
+
+PAGE 92
+saveAsTextFile() : The path is treated as a directory and Spark will output multiple files underneath
+that directory. 
+
+page 103:
+Se explican varios formatos de archivo desde los cuales podemos leer o escribir resultados, entre los mas reconocidos están:
+textFiles
+json 
+csv
+SequenceFiles
+Hadoop inputs and outputs formats:
+hadoopFile() and saveAsHadoopFile() family of functions, you
+can use hadoopDataset / saveAsHadoopDataSet and newAPIHadoopDataset / saveAsNe
+
+
+:::::Protocol buffers:::::::::::::::::::::::::::
+Tips:
+- When you’re adding new fields to existing protocol buffers it is good practice to make the new fields optional
+- Es como un estilo formato json, REVISAR LAS BONDADES QUE OFRECE
+
+::::::::File Compression::::::::::::::::::::::::
+Spark ofrece la posibilidad de 
+
+Limintante:
+we normally try to read our data in
+from multiple different machines. To make this possible, each worker needs to be
+able to find the start of a new record
+
+ver Table 5-3. Compression options, sobretodo los splitables 
+
+::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::Filesystems:::::::::::::::::::::::::::
+
+Local/“Regular” FS: Requiere que los ARCHIvos se encuentren el el MISMO PATH en todos los workers del cluster, si no es así entonces que el file esté en el Driver y luego hace parallelize
+
+Recomienda el autor:
+putting your files in a shared filesystem like HDFS, NFS, or S3.
+
+Example: val rdd = sc.textFile("file:///home/holden/happypandas.gz")
+
+
+Amazon S3::::::
+Se está volviendo famoso para almacenar grandes cantidades de datos.
+
+HDFS:::::::::::::
+Spark and HDFS can
+be collocated on the same machines
+-Brinda el tema de resilencia, al momento en que se caiga un nodo.
+
+Structured Data with Spark SQL:::::::::::::::::::
+Permite usar una sintaxis SQL para consulta de información en los archivos, el resultado en un RDD de objetos
+
+Apache Hive::::::::::::::::
+Es una fuente de datos esturcturados muy comun en Hadoop 
+Hive can store tables in a variety of formats, from plain text to column-oriented formats,
+Spark SQL can load any table supported by Hive
+
+Podemos conectar Hive con Spark SQL (ver pg 91 real en el libreo o 109)
+
+Eg
+
+import org.apache.spark.sql.hive.HiveContext
+val hiveCtx = new org.apache.spark.sql.hive.HiveContext(sc)
+val rows = hiveCtx.sql("SELECT name, age FROM users")
+val firstRow = rows.first()
+println(firstRow.getString(0)) // Field 0 is the name
+
+::::::::::::..JSON:::::::::::::::::::::::::
+Sí tenemos archivos de datos Json y con una estructura consistente entonces podemos hacer cosas como :
+Example 5-33. Sample tweets in JSON
+{"user": {"name": "Holden", "location": "San Francisco"}, "text": "Nice day out today"}
+{"user": {"name": "Matei", "location": "Berkeley"}, "text": "Even nicer here :)"}
+
+val tweets = hiveCtx.jsonFile("tweets.json")
+tweets.registerTempTable("tweets")
+val results = hiveCtx.sql("SELECT user.name, text FROM tweets")
+
+
+
+Databases::::::::::::.Spark se puede conectar a muuchas Bds, bien sea mediante los conectores de Hadoop o los de Spark como tal 
+
+
+:::Java Database Connectivity (no estamos hablando de acceder programando en java, estamos hablando de JDBC)
+
+def createConnection() = {
+Class.forName("com.mysql.jdbc.Driver").newInstance();
+DriverManager.getConnection("jdbc:mysql://localhost/test?user=holden");
+}
+def extractValues(r: ResultSet) = {
+(r.getInt(1), r.getString(2))
+}
+val data = new JdbcRDD(sc,
+createConnection, "SELECT * FROM panda WHERE ? <= id AND id <= ?",
+lowerBound = 1, upperBound = 3, numPartitions = 2, mapRow = extractValues)
+println(data.collect().toList)
+
+
+::::::::::::Cassandra:::::::::::::::(PG94 y 95 REALes CONTIENE lo requerido para configurar con cassandra)
+Spark’s Cassandra support has improved greatly
+Se pueden cargar TABLAS enteras so sub set de datos tambien
+::::::::::::::::::::::::::::::::::::::::::::::::::::
+Example 5-44. Saving to Cassandra in Scala
+val rdd = sc.parallelize(List(Seq("moremagic", 1)))
+rdd.saveToCassandra("test" , "kv", SomeColumns("key", "value"))
+
+This section only briefly introduced the Cassandra connector. For more information,
+check out the connector’s GitHub page.
+
+
+HBase::::::::::::::::::::::::::::::::::::::..
+Spark can access HBase through its Hadoop input format, implemented in the
+org.apache.hadoop.hbase.mapreduce.TableInputFormat class
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+page 117::::::::.Advanced Spark Programming:::::::::::::::
+
+
+
+
+
+
+
