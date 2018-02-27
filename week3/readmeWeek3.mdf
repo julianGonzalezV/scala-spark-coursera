@@ -3,20 +3,77 @@
 
 :::::Shuffling: What it is and why it's important::::::::::::::::::::::::::::::::::::
 
-Moving the Data on the Network is called Suffling:  Ahora el problema relacionado con esto es LA LATENCIA, que pafecta directamente en el performance, ya que el tiempo de respuesta depende de la conexión 
+Moving the Data on the Network is called Suffling:  Ahora el problema relacionado con esto es LA LATENCIA, que afecta directamente en el performance, ya que el tiempo de respuesta depende de la conexión 
 entre estos nodos, velocidad de transferencia de información, etc.
 
-En operaciones como groupByKey el shuffle se puede presentar más a menudo , debido que que requiere que los Keys del mismo valor se  coloquen en un mismo noso, entonces si tenemos
-un key en otro nodo que debería estar en el nodo con los Keys de valor 100 por ejemplo entonces sucede el SHUFFLING(MOVING data on the network), la idea PRINCIPAL entonces es reduce esto 
+En operaciones como groupByKey el shuffle se puede presentar más a menudo , debido que que requiere que los Keys del mismo valor se  coloquen en un mismo nodo, entonces si tenemos
+un key en otro nodo que debería estar en el nodo con los Keys de valor 100 por ejemplo entonces sucede el SHUFFLING(MOVING data on the network), la idea PRINCIPAL entonces es el uso de REDUCE esto 
 COMO??
 	- Se recomienda estrategias como usar el reduceByKey, ya que este hace menos shuffling, en el sentido en que PRIMERO realiza la transformacion en el Mapper Side (EVITANDO HACER SUFFLING)
-	- aL FINAL combina los resultados(hace shuffling pero ya es sobre )
+	- aL FINAL combina los resultados(hace shuffling pero ya es sobre LOS RESULTADOS )
 
 
+Min 7: 
+Cuando tenemos un groupByKey y luego le sigue un map entonces lo podemos cambiar por un reduceByKey : Recordar que group hace varios shuffling.
 
+min 10:47 Muestra como se reemplaza el GroupByKey (tratar de aplicar a la semana 2 :) )
 
-:::::::::::::::::partitioning (Partishioning):::::::::::::::::::::::::::
+recordar que reduce lo hace sobre el mismo nodo, es decir si en el mismo nodo existen Keys duplicados entonces lo que hace reduceByKey es que en ese nodo aplica la operaci´on sin hacer shuffling:
+Cuál sería el peor de los casos? R/ que todos los Keys en el nodo sean diferente, allí  ya  no existiría el Shuffling ver min 11_20 
 
--Cómo sabe spark que los Keys de cierto valor van en un nodo u en otro ?? R/ partitioning :)
+Beneficios que trae enonces el ReduceByKey:
+1) Al reducir el set de datos en el nodo o worker entonces el envío de datos a travéz de la red es considerablemente meno, pués le aplicó el reduce!!!
+2) Lo anterior se resume en PERFORMACE IMPROVEMENT!! VER MIN 13:12 (3 Veces más rápido!!)
+
+:::::::::::::::::partitioning (Partitioning):::::::::::::::::::::::::::
+
+-Cómo sabe spark que los Keys de cierto valor van en un nodo u en otro ?? R/ partitioning :) que se verá a continuación:
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+::2018-02-26::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+Partitioning: GropuByKey(necesita todos los mimso keys en el la misma máquina) tiene low performace debido a que distribuye los keys semejantes sobre todos los nodos en la red con el fin de poder aplicar esta transformación , reduceByKey trabaja con lo que hay hace reduce y sigue distribuyendo los resultados(minimizados)
+
+- Los datos en un RDD están dicididos en particiones 
+- Datos en la misma partición, SIEMPRE están en la misma máquina
+- Por defecto el número de particiones = cantidad de worker X cantidad de Cores en cada uno , eje 6 workwer cada uno con 4 cores = 24, esta sería la cantidad de particiones
+
+
+Spark ofrece 2 clases de particionamieto :
+1- Hash partitioning :  P = key.hashcode() % numberOfPartitions
+2- Range Partitioning : Muy importante cuando alguna clase se orden se define en los Keys o conjuntos de Rdds ordenados, ya que para estos el range partitioning ofrecería un mejor performance
+
+Propiedad: Tuples con Keys en el mismo range están en la MISMA MÁQUINA.
+
+MIN 4_55 ; EJEMPLO DE HASH PART
+-cOMO MORALEJA ES QUe si los datos siguen un orden muchas veces por hash podemos ibtener el peor caso en que tengamos varias particiones y los datos se distribuyen solo en UNO y los demás no se {aprovechan, allí es cuando entonces decidimos ir por el range
+
+MIN 6_20 ; EJEMPLO DE range PART
+
+Min 8 : Ejemplo de custom partitioning:
+Min 9:24 Importante SIEMPRE tener el persist para evitar reprocesos y suffling repetitivos CADA vez que se use el Rdd 
+
+Min 10:40 _Partitioning usando tranformaciones 
+
+Min 11:49: Si se usa Map p FlatMap en un Partitioned Rdd , dicho particionamiento se pierde porque es posible que coloquemos una operacion que cambie el Key, por eso la matoyria de operaciones sobre 
+Rdds partioncionados se ejecutan solbre los values del Rdd es decir se requiere un PairRDD
+
+
+
+TAMBIEN PORDEMOS TENER PERSONALIZADOS PERO SOLO CUANDO HACEMOS USO DE PAIRs RDDs!!
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+Video #3 :::::::::::::::::.. Optimizing with Partitioners::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+Min 1:34 MUESTRAN incluso com optimizar el ReduceByKey usando partitioning(en mi caso sería por ser uan sola máquina con 4 procesadores podría usar el de range con 4 cores de un solo host)
+
+
+
+
+
+
+
+
+
