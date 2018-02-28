@@ -32,7 +32,7 @@ Beneficios que trae enonces el ReduceByKey:
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 ::2018-02-26::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-Partitioning: GropuByKey(necesita todos los mimso keys en el la misma máquina) tiene low performace debido a que distribuye los keys semejantes sobre todos los nodos en la red con el fin de poder aplicar esta transformación , reduceByKey trabaja con lo que hay hace reduce y sigue distribuyendo los resultados(minimizados)
+Partitioning: GropuByKey(necesita todos los mismos keys en el la misma máquina) tiene low performace debido a que distribuye los keys semejantes sobre todos los nodos en la red con el fin de poder aplicar esta transformación , reduceByKey trabaja con lo que hay hace reduce y sigue distribuyendo los resultados(minimizados)
 
 - Los datos en un RDD están dicididos en particiones 
 - Datos en la misma partición, SIEMPRE están en la misma máquina
@@ -46,7 +46,7 @@ Spark ofrece 2 clases de particionamieto :
 Propiedad: Tuples con Keys en el mismo range están en la MISMA MÁQUINA.
 
 MIN 4_55 ; EJEMPLO DE HASH PART
--cOMO MORALEJA ES QUe si los datos siguen un orden muchas veces por hash podemos ibtener el peor caso en que tengamos varias particiones y los datos se distribuyen solo en UNO y los demás no se {aprovechan, allí es cuando entonces decidimos ir por el range
+-cOMO MORALEJA ES QUe si los datos siguen un orden muchas veces por hash podemos obtener el peor caso en que tengamos varias particiones y los datos se distribuyen solo en UNO y los demás no se {aprovechan, allí es cuando entonces decidimos ir por el range
 
 MIN 6_20 ; EJEMPLO DE range PART
 
@@ -67,13 +67,52 @@ TAMBIEN PORDEMOS TENER PERSONALIZADOS PERO SOLO CUANDO HACEMOS USO DE PAIRs RDDs
 
 Video #3 :::::::::::::::::.. Optimizing with Partitioners::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-Min 1:34 MUESTRAN incluso com optimizar el ReduceByKey usando partitioning(en mi caso sería por ser uan sola máquina con 4 procesadores podría usar el de range con 4 cores de un solo host)
+Min 1:34 MUESTRAN incluso como optimizar el ReduceByKey usando partitioning(en mi caso sería por ser una sola máquina con 4 procesadores podría usar el de range con 4 cores de un solo host)
+
+toDebugString permite ver los shuffling que mi algoritmo está realizando
+
+O EN EL MIN 8:36 explican las operaciones que causan Shuffling
 
 
 
 
+Video #4 :::::::::::::::::..Wide vs Narrow Dependencies::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+Terminology.
+Lineages: think about a group of computations that are done on a RDD, we can call that group of computations, a lineage graph(a directed aciclyc , que representa 
+las computaciones realizadas sobre un RDD )
+
+
+How are RDDs represented??
+por:
+1) Partition: Atomic pieces of the data Set, being one o many of them per node 
+2) Dendencies : Es el como hizo un Rdd(parent) para llegar a otro Rdd(child) ..fué un map?, filter? ...si map y las demás transformaciones se consideran dependencies  
+3) A function; La función aplicada para obtener el RDD hijo
+4) Metadata: Schema donde están alojados los datos
+
+Transformation 2 tipos de dependencias, además Transformation causan shuffle
+1- Narrow Dependencies
+min 5:07  Narrow es cuando cada particion del RDD padre es usada máximo por una particion en el child Rdd  ...fast porque no necesariamente requiere shuffle y es optimo poque corre todo como una peecie de 
+pipeline, lo que permite ejecutar varias TRASFORMACINES EN UN SOLO PASO (TENERLO EN CUENTA PARA LA ASIGNACIÓN)
+
+UNION
+MAP
+FILTER
+JOINS WITH CO-PARTITIONS INPUTS
+
+...
+2- Wide Dependencies: es cuando cada particion del RDD padre puede ser usada por muchas particoines en el child Rdd ...slow poque si requiere repartir TODOS o algunos datos en la red
+GROUPBYKEY
+JOINS WITH NO CO-PARTITIONS INPUTS
 
 
 
+SI QUEREMOS VER LOS DEPENDENCIES , spark ofrece un método dependencies para visualizar lo que está haciendo y poder detectar problemas de performance (shuffle)
+
+
+lineage graph son la clave para la toleracia a fallos, ya que se puede recomputar solo la parte MIN 16:00 MUESTRA COMO solo se recomputa una particion, ya que al ser los RDD inmutables queda el registro de como estaba antes(parent) para calcular la particion del rdd(CHILD) que falló 
+
+Recomputing partitions que se derivan de transformaciones tipo "wide dependencie" resulta costoso 
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
