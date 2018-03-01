@@ -16,7 +16,11 @@ case class Posting(postingType: Int, id: Int, acceptedAnswer: Option[Int], paren
 
 /** The main class */
 object StackOverflow extends StackOverflow {
+<<<<<<< HEAD
   @transient lazy val conf: SparkConf = new SparkConf().setAppName("StackOverflow").setMaster("local[2]")
+=======
+  @transient lazy val conf: SparkConf = new SparkConf().setAppName("StackOverflow").setMaster("local[1]")
+>>>>>>> c82956211fa88660c05d6d9dcff739c8cf221fca
   @transient lazy val sc: SparkContext = new SparkContext(conf)
 
   /** Main function */
