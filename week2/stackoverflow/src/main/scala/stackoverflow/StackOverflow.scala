@@ -1,8 +1,7 @@
 package stackoverflow
 
 import org.apache.spark
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
+import org.apache.spark.{RangePartitioner, SparkConf, SparkContext}
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
@@ -17,7 +16,7 @@ case class Posting(postingType: Int, id: Int, acceptedAnswer: Option[Int], paren
 
 /** The main class */
 object StackOverflow extends StackOverflow {
-  @transient lazy val conf: SparkConf = new SparkConf().setAppName("StackOverflow").setMaster("local[2]").set("spark.executor.memory", "3g")
+  @transient lazy val conf: SparkConf = new SparkConf().setAppName("StackOverflow").setMaster("local[2]")
   @transient lazy val sc: SparkContext = new SparkContext(conf)
 
   /** Main function */
@@ -28,6 +27,9 @@ object StackOverflow extends StackOverflow {
     val grouped = groupedPostings(raw)
     val scored  = scoredPostings(grouped)//.sample(true,0.1,0)
     val vectors = vectorPostings(scored).persist()
+
+    // val tunedPartition = new RangePartitioner(4, vectors)
+
 //System.out.println("vectors.count() "+vectors.count())
 //    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
 //MEANS va a ser sampleVectors(vectors) como set inicializador del kmeans algorithm
@@ -223,8 +225,21 @@ class StackOverflow extends Serializable {
       .collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
 */
 
-      vectors.groupBy(findClosest(_, means))
-      .mapValues(averageVectors).collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+/*val v1: RDD[(HighScore, (HighScore, HighScore, HighScore))] = vectors.map(item => (findClosest(item,means),(item._1,item._2,1)))
+  .reduceByKey((x,y) => (x._1 + y._1, x._2 +y._2, x._3 + y._3))*/
+
+    val v2: Array[(HighScore, (HighScore, HighScore))] = vectors.map(item => (findClosest(item,means),(item._1,item._2,1)))
+      .reduceByKey((x,y) => (x._1 + y._1, x._2 +y._2, x._3 + y._3))
+          .mapValues(x => ((x._1 / x._3).toInt, (x._2 / x._3).toInt)).collect()
+
+    v2.foreach(print)
+
+    v2.foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+
+      //.map(x=> (x._1, ((x._2._1 / x._2._3).toInt, (x._2._2 / x._2._3).toInt))).collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+
+    /* vectors.groupBy(findClosest(_, means))
+      .mapValues(averageVectors).collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))*/
 /*
      vectors.map(pairV => (findClosest(pairV,means), pairV)).aggregateByKey((0,0))((x,y)=>(x._1 + y._1, x._2 + 1), (x,y) => (x._1 + y._1, x._2 + y._2))
        .mapValues(x => (x._2._1/x._1, x._2._2/x._1))*/
