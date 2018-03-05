@@ -144,7 +144,6 @@ class StackOverflow extends Serializable {
   /** Sample the vectors */
   def sampleVectors(vectors: RDD[(LangIndex, HighScore)]): Array[(Int, Int)] = {
 
-    System.out.print("langs.length:::::::::::::"+langs.length+"   kmeansKernels:::"+kmeansKernels)
     assert(kmeansKernels % langs.length == 0, "kmeansKernels should be a multiple of the number of languages studied.")
     val perLang = kmeansKernels / langs.length
 
@@ -200,217 +199,192 @@ class StackOverflow extends Serializable {
 
 
     val newMeans = means.clone()
-    //groupByKey() retruns a RDD[(HighScore, Iterable[(HighScore, HighScore)])]
-   // val classifiedLangsByCluster = vectors.map(item => (findClosest(item,means),item)).groupByKey().persist()
 
-    //val v2 = vectors.map(item => (findClosest(item,means),item)).groupByKey().mapValues(averageVectors).cache()
-
-    // these are the computed newMeans
-   /* System.out.println("means ANTES  es:::::::::::::::::::::::::::::::::tamanio "+means.size)
-    System.out.println(means.foreach(print(_)))*/
-
-   /* val agrupados = vectors.map(item => (findClosest(item,means),item)).groupByKey()
-    System.out.println("agrupados:::::::::::::::::::::::::::::::::tamanio ")
-    System.out.println(agrupados.foreach(print(_)))*/
-
-    //val groupedList2 = vectors.map(item => (findClosest(item,means),item)).reduceByKey((x,y)=>x)
-
-      //.mapValues(averageVectors).collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
-    //RDD[(HighScore, (HighScore, HighScore))]
-    /*val groupedList  = vectors.map(item => (findClosest(item,means),(1,item)))
-      .reduceByKey((x,y)=> (x._1+y._1,(x._2._1 + y._2._1,x._2._2 + y._2._2))).mapValues(x => (x._2._1/x._1, x._2._2/x._1))
-      .collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))*/
-
-     /* .foldByKey((0,0))((x,y)=> averageVectors(Iterable((x._1,x._2),(y._1,y._2))))
-      .collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
-*/
-
-/*val v1: RDD[(HighScore, (HighScore, HighScore, HighScore))] = vectors.map(item => (findClosest(item,means),(item._1,item._2,1)))
-  .reduceByKey((x,y) => (x._1 + y._1, x._2 +y._2, x._3 + y._3))*/
-
-    val v2: Array[(HighScore, (HighScore, HighScore))] = vectors.map(item => (findClosest(item,means),(item._1,item._2,1)))
-      .reduceByKey((x,y) => (x._1 + y._1, x._2 +y._2, x._3 + y._3))
-          .mapValues(x => ((x._1 / x._3).toInt, (x._2 / x._3).toInt)).collect()
-
-    v2.foreach(print)
-
-    v2.foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
-
-      //.map(x=> (x._1, ((x._2._1 / x._2._3).toInt, (x._2._2 / x._2._3).toInt))).collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
-
-    /* vectors.groupBy(findClosest(_, means))
-      .mapValues(averageVectors).collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))*/
-/*
-     vectors.map(pairV => (findClosest(pairV,means), pairV)).aggregateByKey((0,0))((x,y)=>(x._1 + y._1, x._2 + 1), (x,y) => (x._1 + y._1, x._2 + y._2))
-       .mapValues(x => (x._2._1/x._1, x._2._2/x._1))*/
+    /*vectors.groupBy(findClosest(_, means))
+      .mapValues(averageVectors).collect()
+      .foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))*/
 
 
-   // groupedList.collect().foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
-
-/*    System.out.println("newMeans DESPUES  es:::::::::::::::::::::::::::::::::tamanio "+newMeans.size)
-    System.out.println(newMeans.foreach(print(_)))*/
-
-
-    // TODO: Fill in the newMeans array
-    val distance = euclideanDistance(means, newMeans)
-
-    if (debug) {
-      println(s"""Iteration: $iter
-                 |  * current distance: $distance
-                 |  * desired distance: $kmeansEta
-                 |  * means:""".stripMargin)
-      for (idx <- 0 until kmeansKernels)
-      println(f"   ${means(idx).toString}%20s ==> ${newMeans(idx).toString}%20s  " +
-              f"  distance: ${euclideanDistance(means(idx), newMeans(idx))}%8.0f")
-    }
-
-    if (converged(distance))
-      newMeans
-    else if (iter < kmeansMaxIterations)
-      kmeans(newMeans, vectors, iter + 1, debug)
-    else {
-      if (debug) {
-        println("Reached max iterations!")
-      }
-      newMeans
-    }
-  }
+    val vv = vectors.map(item => (findClosest(item,means),item))
+      .groupByKey()
+      .mapValues(averageVectors)
+      .foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
 
 
-
-
-  //
-  //
-  //  Kmeans utilities:
-  //
-  //
-
-  /** Decide whether the kmeans clustering converged */
-  def converged(distance: Double) =
-    distance < kmeansEta
-
-
-  /** Return the euclidean distance between two points */
-  def euclideanDistance(v1: (Int, Int), v2: (Int, Int)): Double = {
-    val part1 = (v1._1 - v2._1).toDouble * (v1._1 - v2._1)
-    val part2 = (v1._2 - v2._2).toDouble * (v1._2 - v2._2)
-    part1 + part2
-  }
-
-  /** Return the euclidean distance between two points */
-  def euclideanDistance(a1: Array[(Int, Int)], a2: Array[(Int, Int)]): Double = {
     /*
-    System.out.println("a1.length "+a1.length + "  a2.length "+a2.length)
-    System.out.println("a1 es::::::::::::::::::::::::::::::::: ")
-    System.out.println(a1.foreach(print(_)) )
-    System.out.println("a2 es::::::::::::::::::::::::::::::::: ")
-    System.out.println(a2.foreach(print(_))  )*/
-    assert(a1.length == a2.length)
-    var sum = 0d
-    var idx = 0
-    while(idx < a1.length) {
-      sum += euclideanDistance(a1(idx), a2(idx))
-      idx += 1
+    See how It has improved the performance only by change the way we program, in this case
+    we only change groupBy or groupByKey for reduceByKey, the last one offer us a better perfomance
+    in fac, if we have a cluster configuration the performance improve noticeably
+     */
+   /* vectors.map(item => (findClosest(item,means),(item._1.toLong,item._2.toLong,1)))
+      .reduceByKey((x,y) => (x._1 + y._1, x._2 +y._2, x._3 + y._3))
+      .mapValues(x => ((x._1 / x._3).toInt, (x._2 / x._3).toInt)).collect()
+      .foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))*/
+
+
+
+
+
+// TODO: Fill in the newMeans array
+val distance = euclideanDistance(means, newMeans)
+
+if (debug) {
+  println(s"""Iteration: $iter
+             |  * current distance: $distance
+             |  * desired distance: $kmeansEta
+             |  * means:""".stripMargin)
+  for (idx <- 0 until kmeansKernels)
+  println(f"   ${means(idx).toString}%20s ==> ${newMeans(idx).toString}%20s  " +
+          f"  distance: ${euclideanDistance(means(idx), newMeans(idx))}%8.0f")
+}
+
+if (converged(distance))
+  newMeans
+else if (iter < kmeansMaxIterations)
+  kmeans(newMeans, vectors, iter + 1, debug)
+else {
+  if (debug) {
+    println("Reached max iterations!")
+  }
+  newMeans
+}
+}
+
+
+
+
+//
+//
+//  Kmeans utilities:
+//
+//
+
+/** Decide whether the kmeans clustering converged */
+def converged(distance: Double) =
+distance < kmeansEta
+
+
+/** Return the euclidean distance between two points */
+def euclideanDistance(v1: (Int, Int), v2: (Int, Int)): Double = {
+val part1 = (v1._1 - v2._1).toDouble * (v1._1 - v2._1)
+val part2 = (v1._2 - v2._2).toDouble * (v1._2 - v2._2)
+part1 + part2
+}
+
+/** Return the euclidean distance between two points */
+def euclideanDistance(a1: Array[(Int, Int)], a2: Array[(Int, Int)]): Double = {
+/*
+System.out.println("a1.length "+a1.length + "  a2.length "+a2.length)
+System.out.println("a1 es::::::::::::::::::::::::::::::::: ")
+System.out.println(a1.foreach(print(_)) )
+System.out.println("a2 es::::::::::::::::::::::::::::::::: ")
+System.out.println(a2.foreach(print(_))  )*/
+assert(a1.length == a2.length)
+var sum = 0d
+var idx = 0
+while(idx < a1.length) {
+  sum += euclideanDistance(a1(idx), a2(idx))
+  idx += 1
+}
+sum
+}
+
+/** Return the closest point
+* retorna el index (posicion) de centers cuya distancia euclidiana es menor */
+def findClosest(p: (Int, Int), centers: Array[(Int, Int)]): Int = {
+var bestIndex = 0
+var closest = Double.PositiveInfinity
+for (i <- 0 until centers.length) {
+  val tempDist = euclideanDistance(p, centers(i))
+  if (tempDist < closest) {
+    closest = tempDist
+    bestIndex = i
+  }
+}
+bestIndex
+}
+
+
+/** Average the vectors */
+def averageVectors(ps: Iterable[(Int, Int)]): (Int, Int) = {
+val iter = ps.iterator
+var count = 0
+var comp1: Long = 0
+var comp2: Long = 0
+while (iter.hasNext) {
+  val item = iter.next
+  comp1 += item._1
+  comp2 += item._2
+  count += 1
+}
+((comp1 / count).toInt, (comp2 / count).toInt)
+}
+
+
+
+
+//
+//
+//  Displaying results:
+//
+//
+def clusterResults(means: Array[(Int, Int)], vectors: RDD[(LangIndex, HighScore)]): Array[(String, Double, Int, Int)] = {
+val closest  = vectors.map(p => (findClosest(p, means), p))
+/*System.out.println("closest:::::::::::::::::")
+closest.foreach(println(_))*/
+
+val closestGrouped = closest.groupByKey()
+/*System.out.println("closestGrouped:::::::::::::::::")
+closestGrouped.foreach(println(_))*/
+
+val median: RDD[(HighScore, (String, Double, HighScore, HighScore))] = closestGrouped.mapValues { vs =>
+
+  /**
+    * (a) the dominant programming language in the cluster;
+    * NOTA ESTABA COMETIENDO EL SIGUIENTE ERROR vs.reduce((x, y)=> if (x._2 > y._2) x._1 else y._1) POR QUE NO FUNCIONA??
+    * R// porque la firma de reduce es clara y dice que el elemento de retorno debe ser del tipo de la lista que
+    * estoy procesano, recordar que es diferente a map que si la transforma
+    */
+  val langIdx: (LangIndex, HighScore) = vs.reduce((x, y)=> if (x._2 > y._2) x else y)
+  val langLabel: String   = langs(langIdx._1/langSpread)//langs(vs.reduce((x, y)=> if (x._2 > y._2) x._1 else y._1)) // most common language in the cluster
+  /**
+    * (b) the percent of answers that belong to the dominant language;
+    * : Iterable[(LangIndex, HighScore)]
+    */
+  val langPercent = if (vs.size>0 ) (vs.filter(x => x._1 == langIdx._1).size/vs.size)*100 else 0
+
+  /**
+    *(c) the size of the cluster (the number of questions it contains);
+    */
+  val clusterSize: Int    =  vs.size
+  /**
+    * (d) the median of the highest answer scores.
+      vs es de tipo  Iterable[(LangIndex, HighScore)]
+    */
+
+  val median = vs.toList.sortBy(_._2).map(x  => x._2)
+/*  println("median:" +Math.floor(clusterSize/2))
+  println("median records:"+median)
+  median.foreach(print(_))*/
+  val medianScore = {
+    if((vs.size % 2) == 0) {
+      Math.round((median((clusterSize/2)-1) + median(clusterSize/2)) / 2)
     }
-    sum
-  }
-
-  /** Return the closest point
-    * retorna el index (posicion) de centers cuya distancia euclidiana es menor */
-  def findClosest(p: (Int, Int), centers: Array[(Int, Int)]): Int = {
-    var bestIndex = 0
-    var closest = Double.PositiveInfinity
-    for (i <- 0 until centers.length) {
-      val tempDist = euclideanDistance(p, centers(i))
-      if (tempDist < closest) {
-        closest = tempDist
-        bestIndex = i
-      }
-    }
-    bestIndex
+    else median(Math.floor(clusterSize/2).toInt)
   }
 
 
-  /** Average the vectors */
-  def averageVectors(ps: Iterable[(Int, Int)]): (Int, Int) = {
-    val iter = ps.iterator
-    var count = 0
-    var comp1: Long = 0
-    var comp2: Long = 0
-    while (iter.hasNext) {
-      val item = iter.next
-      comp1 += item._1
-      comp2 += item._2
-      count += 1
-    }
-    ((comp1 / count).toInt, (comp2 / count).toInt)
-  }
+  (langLabel, langPercent, clusterSize, medianScore)
+}
 
+median.collect().map(_._2).sortBy(_._4)
+}
 
-
-
-  //
-  //
-  //  Displaying results:
-  //
-  //
-  def clusterResults(means: Array[(Int, Int)], vectors: RDD[(LangIndex, HighScore)]): Array[(String, Double, Int, Int)] = {
-    val closest  = vectors.map(p => (findClosest(p, means), p))
-    /*System.out.println("closest:::::::::::::::::")
-    closest.foreach(println(_))*/
-
-    val closestGrouped = closest.groupByKey()
-    /*System.out.println("closestGrouped:::::::::::::::::")
-    closestGrouped.foreach(println(_))*/
-
-    val median: RDD[(HighScore, (String, Double, HighScore, HighScore))] = closestGrouped.mapValues { vs =>
-
-      /**
-        * (a) the dominant programming language in the cluster;
-        * NOTA ESTABA COMETIENDO EL SIGUIENTE ERROR vs.reduce((x, y)=> if (x._2 > y._2) x._1 else y._1) POR QUE NO FUNCIONA??
-        * R// porque la firma de reduce es clara y dice que el elemento de retorno debe ser del tipo de la lista que
-        * estoy procesano, recordar que es diferente a map que si la transforma
-        */
-      val langIdx: (LangIndex, HighScore) = vs.reduce((x, y)=> if (x._2 > y._2) x else y)
-      val langLabel: String   = langs(langIdx._1/langSpread)//langs(vs.reduce((x, y)=> if (x._2 > y._2) x._1 else y._1)) // most common language in the cluster
-      /**
-        * (b) the percent of answers that belong to the dominant language;
-        * : Iterable[(LangIndex, HighScore)]
-        */
-      val langPercent = if (vs.size>0 ) (vs.filter(x => x._1 == langIdx._1).size/vs.size)*100 else 0
-
-      /**
-        *(c) the size of the cluster (the number of questions it contains);
-        */
-      val clusterSize: Int    =  vs.size
-      /**
-        * (d) the median of the highest answer scores.
-          vs es de tipo  Iterable[(LangIndex, HighScore)]
-        */
-
-      val median = vs.toList.sortBy(_._2).map(x  => x._2)
-    /*  println("median:" +Math.floor(clusterSize/2))
-      println("median records:"+median)
-      median.foreach(print(_))*/
-      val medianScore = {
-        if((vs.size % 2) == 0) {
-          Math.round((median((clusterSize/2)-1) + median(clusterSize/2)) / 2)
-        }
-        else median(Math.floor(clusterSize/2).toInt)
-      }
-
-
-      (langLabel, langPercent, clusterSize, medianScore)
-    }
-
-    median.collect().map(_._2).sortBy(_._4)
-  }
-
-  def printResults(results: Array[(String, Double, Int, Int)]): Unit = {
-    println("Resulting clusters:")
-    println("  Score  Dominant language (%percent)  Questions")
-    println("================================================")
-    for ((lang, percent, size, score) <- results)
-      println(f"${score}%7d  ${lang}%-17s (${percent}%-5.1f%%)      ${size}%7d")
-  }
+def printResults(results: Array[(String, Double, Int, Int)]): Unit = {
+println("Resulting clusters:")
+println("  Score  Dominant language (%percent)  Questions")
+println("================================================")
+for ((lang, percent, size, score) <- results)
+  println(f"${score}%7d  ${lang}%-17s (${percent}%-5.1f%%)      ${size}%7d")
+}
 }

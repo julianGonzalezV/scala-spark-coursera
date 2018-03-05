@@ -199,7 +199,7 @@ Unas de las razones para no particionae es SI POR EJEMPLO Sí lel rdd is scanned
 Data Partitioning (Advanced)
 Se muestran las ventajas de .partitionBy(new HashPartitioner(100), make this at least as large
 as the number of cores in your cluster) sobretodo en JOINs (ver pg 81 o 62  en el libro)
-, en resumen es algo así como que en el momento de hacer jpin y distribuir los datos NO distribuye lo que ya se había distribuido antes sin contro el OTHER rdd del jooin
+, en resumen es algo así como que en el momento de hacer jpin y distribuir los datos NO distribuye lo que ya se había distribuido antes sin control el OTHER rdd del join
 lo anterior es importante por le tema de LATENCY 
 
 

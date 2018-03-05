@@ -14,16 +14,15 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
 
 
   lazy val testObject = new StackOverflow {
-    override val langs =
+  /*  override val langs =
       List(
         "JavaScript", "Java", "PHP", "Python", "C#", "C++", "Ruby", "CSS",
-        "Objective-C", "Perl", "Scala", "Haskell", "MATLAB", "Clojure", "Groovy")
-/*
+        "Objective-C", "Perl", "Scala", "Haskell", "MATLAB", "Clojure", "Groovy")*/
     override val langs =
       List(
-        "JavaScript", "Java", "PHP")*/
+        "JavaScript", "Java", "PHP")
     override def langSpread = 50000
-    override def kmeansKernels = 15
+    override def kmeansKernels = 3
     override def kmeansEta: Double = 20.0D
     override def kmeansMaxIterations = 120
   }
@@ -151,21 +150,27 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
       Posting(1,1,Some(1),None,1,Some("Java")),
       Posting(1,2,Some(1),None,1,Some("JavaScript")),
       Posting(1,3,Some(1),None,1,Some("PHP")),
+      Posting(1,4,Some(1),None,1,Some("Java")),
 
       //java answers
-      Posting(2,4,Some(1),Some(1),1,Some("Java")),
-      Posting(2,5,Some(1),Some(1),5,Some("Java")),
-      Posting(2,6,Some(1),Some(1),10,Some("Java")),
+      Posting(2,5,Some(1),Some(1),1,Some("Java")),
+      Posting(2,6,Some(1),Some(1),5,Some("Java")),
+      Posting(2,7,Some(1),Some(1),10,Some("Java")),
 
     //JavaScript answers
-      Posting(2,7,Some(1),Some(2),2,Some("JavaScript")),
-      Posting(2,8,Some(1),Some(2),4,Some("JavaScript")),
-      Posting(2,9,Some(1),Some(2),6,Some("JavaScript")),
+      Posting(2,8,Some(1),Some(2),2,Some("JavaScript")),
+      Posting(2,9,Some(1),Some(2),4,Some("JavaScript")),
+      Posting(2,10,Some(1),Some(2),6,Some("JavaScript")),
 
     //PHP answers
-      Posting(2,10,Some(1),Some(3),8,Some("PHP")),
-      Posting(2,11,Some(1),Some(3),10,Some("PHP")),
-      Posting(2,12,Some(1),Some(3),12,Some("PHP"))
+      Posting(2,11,Some(1),Some(3),8,Some("PHP")),
+      Posting(2,12,Some(1),Some(3),10,Some("PHP")),
+      Posting(2,13,Some(1),Some(3),12,Some("PHP")),
+
+        //java answers 2
+      Posting(2,14,Some(1),Some(4),20,Some("Java")),
+      Posting(2,15,Some(1),Some(4),30,Some("Java")),
+      Posting(2,16,Some(1),Some(4),40,Some("Java"))
 
     )
 
