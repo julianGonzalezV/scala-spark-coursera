@@ -16,7 +16,7 @@ case class Posting(postingType: Int, id: Int, acceptedAnswer: Option[Int], paren
 
 /** The main class */
 object StackOverflow extends StackOverflow {
-  @transient lazy val conf: SparkConf = new SparkConf().setAppName("StackOverflow").setMaster("local[1]")
+  @transient lazy val conf: SparkConf = new SparkConf().setAppName("StackOverflow").setMaster("local[3]").set("spark.executor.memory", "1g")
   @transient lazy val sc: SparkContext = new SparkContext(conf)
 
   /** Main function */
@@ -84,15 +84,19 @@ class StackOverflow extends Serializable {
 
   /** Group the questions and answers together */
   def groupedPostings(postings: RDD[Posting]): RDD[(QID, Iterable[(Question, Answer)])] = {
-    val questionsRdd = postings.filter(posting => posting.postingType == 1).map(q => (q.id, q))
-    //REVISAR
-    val answersRdd  = postings.filter(posting => posting.postingType == 2).map(a => (a.parentId.getOrElse(-1), a))
-    //val v1 = questionsRdd.leftOuterJoin(answersRdd).groupByKey().map(groupV => (groupV._1, groupV._2.map(x=> (x._1,x._2.getOrElse(Posting(0,0,None,None,0,None))))) )
+    val questions = postings.filter(posting => posting.postingType == 1).map(q => (q.id, q))
+    val answers = postings.filter(posting => posting.postingType == 2).map(a => (a.parentId.getOrElse(-1), a))
 
-    //RDD[(HighScore, Iterable[(Option[Question], Question)])]
-    //val v2 = questionsRdd.rightOuterJoin(answersRdd).groupByKey().map(groupV => (groupV._1,groupV._2.map(x=>(x._1.getOrElse(Posting(0,0,None,None,0,None)), x._2))))
+     questions.join(answers).groupByKey()
 
-    questionsRdd.join(answersRdd).groupByKey()
+   /* val x: RDD[(HighScore, (Question, Question))] = questions.join(answers)
+    questions.join(answers).aggregateByKey(List(Posting, Posting))(
+      (aggr, value) => aggr ::: (value :: Nil),
+      (aggr1, aggr2) => aggr1 ::: aggr2
+    )*/
+
+    //val v3 = questions.join(answers).reduceByKey()
+
   }
 
 
@@ -200,26 +204,29 @@ class StackOverflow extends Serializable {
 
     val newMeans = means.clone()
 
-    /*vectors.groupBy(findClosest(_, means))
+    /*Este se tarda entre 3-4mins
+    vectors.groupBy(findClosest(_, means))
       .mapValues(averageVectors).collect()
       .foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))*/
 
-
-    val vv = vectors.map(item => (findClosest(item,means),item))
-      .groupByKey()
-      .mapValues(averageVectors)
-      .foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
+    /*Este se tarda entre +- 3mins
+      vectors.map(item => (findClosest(item,means),item))
+        .groupByKey()
+        .mapValues(averageVectors)
+        .collect()
+        .foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))*/
 
 
     /*
     See how It has improved the performance only by change the way we program, in this case
     we only change groupBy or groupByKey for reduceByKey, the last one offer us a better perfomance
     in fac, if we have a cluster configuration the performance improve noticeably
+    It takes 1min 30 Seg
      */
-   /* vectors.map(item => (findClosest(item,means),(item._1.toLong,item._2.toLong,1)))
+    vectors.map(item => (findClosest(item,means),(item._1.toLong,item._2.toLong,1)))
       .reduceByKey((x,y) => (x._1 + y._1, x._2 +y._2, x._3 + y._3))
       .mapValues(x => ((x._1 / x._3).toInt, (x._2 / x._3).toInt)).collect()
-      .foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))*/
+      .foreach(meanItem => newMeans.update(meanItem._1,meanItem._2))
 
 
 
