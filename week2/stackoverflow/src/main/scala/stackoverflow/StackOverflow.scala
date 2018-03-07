@@ -34,7 +34,7 @@ object StackOverflow extends StackOverflow {
 //System.out.println("vectors.count() "+vectors.count())
 //    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
 //MEANS va a ser sampleVectors(vectors) como set inicializador del kmeans algorithm
-    val means   = kmeans(sampleVectors(vectors), vectors, debug = true)
+    val means   = kmeans(sampleVectors(vectors), vectors, debug = false)
     val results = clusterResults(means, vectors)
     printResults(results)
   }
