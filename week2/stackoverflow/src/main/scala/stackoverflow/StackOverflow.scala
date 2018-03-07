@@ -24,16 +24,17 @@ object StackOverflow extends StackOverflow {
 
     val lines   = sc.textFile("src/main/resources/stackoverflow/stackoverflow.csv")
     val raw     = rawPostings(lines)
+
     val grouped = groupedPostings(raw)
     val scored  = scoredPostings(grouped)//.sample(true,0.1,0)
-    val vectors = vectorPostings(scored).persist()
+    val vectors = vectorPostings(scored).cache()
 
     // val tunedPartition = new RangePartitioner(4, vectors)
 
 //System.out.println("vectors.count() "+vectors.count())
 //    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
 //MEANS va a ser sampleVectors(vectors) como set inicializador del kmeans algorithm
-    val means   = kmeans(sampleVectors(vectors), vectors, debug = false)
+    val means   = kmeans(sampleVectors(vectors), vectors, debug = true)
     val results = clusterResults(means, vectors)
     printResults(results)
   }
@@ -84,18 +85,17 @@ class StackOverflow extends Serializable {
 
   /** Group the questions and answers together */
   def groupedPostings(postings: RDD[Posting]): RDD[(QID, Iterable[(Question, Answer)])] = {
-    val questions = postings.filter(posting => posting.postingType == 1).map(q => (q.id, q))
-    val answers = postings.filter(posting => posting.postingType == 2).map(a => (a.parentId.getOrElse(-1), a))
 
-     questions.join(answers).groupByKey()
+    val joined= postings.filter(posting => posting.postingType == 1).map(q => (q.id, q))
+      .join(postings.filter(posting => posting.postingType == 2).map(a => (a.parentId.getOrElse(-1), a)))
 
-   /* val x: RDD[(HighScore, (Question, Question))] = questions.join(answers)
-    questions.join(answers).aggregateByKey(List(Posting, Posting))(
-      (aggr, value) => aggr ::: (value :: Nil),
-      (aggr1, aggr2) => aggr1 ::: aggr2
-    )*/
 
-    //val v3 = questions.join(answers).reduceByKey()
+
+     //questions.join(answers).groupByKey()
+    joined.aggregateByKey (Iterable.empty[(Question, Question)])(
+      (listResult, value) => listResult ++ (value :: Nil),
+      (list1, list2) => list1 ++  list2
+    )
 
   }
 
