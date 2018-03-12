@@ -16,7 +16,7 @@ case class Posting(postingType: Int, id: Int, acceptedAnswer: Option[Int], paren
 
 /** The main class */
 object StackOverflow extends StackOverflow {
-  @transient lazy val conf: SparkConf = new SparkConf().setAppName("StackOverflow").setMaster("local[3]").set("spark.executor.memory", "1g")
+  @transient lazy val conf: SparkConf = new SparkConf().setAppName("StackOverflow").setMaster("local[2]").set("spark.executor.memory", "1g")
   @transient lazy val sc: SparkContext = new SparkContext(conf)
 
   /** Main function */
@@ -87,7 +87,7 @@ class StackOverflow extends Serializable {
   def groupedPostings(postings: RDD[Posting]): RDD[(QID, Iterable[(Question, Answer)])] = {
 
     val joined= postings.filter(posting => posting.postingType == 1).map(q => (q.id, q))
-      .join(postings.filter(posting => posting.postingType == 2).map(a => (a.parentId.getOrElse(-1), a)))
+      .join(postings.filter(posting => posting.postingType == 2).map(a => (a.parentId.get, a)))
 
 
 
@@ -97,13 +97,16 @@ class StackOverflow extends Serializable {
       (list1, list2) => list1 ++  list2
     )
 
+
+    //joined.groupByKey()
+
   }
 
 
   /** Compute the maximum score for each posting */
   def scoredPostings(grouped: RDD[(QID, Iterable[(Question, Answer)])]): RDD[(Question, HighScore)] = {
 
-    def answerHighScore(as: Array[Answer]): HighScore = {
+    /*def answerHighScore(as: Array[Answer]): HighScore = {
       var highScore = 0
           var i = 0
           while (i < as.length) {
@@ -113,9 +116,10 @@ class StackOverflow extends Serializable {
                   i += 1
           }
       highScore
-    }
+    }*/
+    def answerHighScore(as: Iterable[Posting]): Int = as.map(_.score).max
 
-    grouped.map(item => (item._2.head._1,answerHighScore(item._2.map(x => x._2 ).toArray)))
+    grouped.map(item => (item._2.head._1,answerHighScore(item._2.map(x => x._2 ))))
   }
 
 

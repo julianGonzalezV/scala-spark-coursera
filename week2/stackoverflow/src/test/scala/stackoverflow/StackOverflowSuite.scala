@@ -141,6 +141,7 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
     assert(true)
   }*/
 
+  /*
 
   test("groupedPostings test 5 ") {
     import StackOverflow._
@@ -200,6 +201,6 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
     prnt.foreach(println(_))
     assert(true)
   }
-
+*/
 
 }
