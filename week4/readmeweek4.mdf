@@ -1,0 +1,31 @@
+::::::::::::::::::::marzo/12/2018::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+STRUCTURE AND OPTIMIZATION:
+
+Diferencias entre:
+ 1- Hacer Join primero de todos un set de datos completos (clientes y facturas) para luego filtrar lo que necesitamos
+ 2- Hacer el filter de clientes (lo que necesitamos), luego el filter requerido para facturas ; fnalmente join (mejor PERFORMANCE!!!)
+ 3- Hacer el producto cartesiano
+
+pERO Será que existe alguna forma en que al escribir cod con base al punto 3, spark es capaz de cambiar internamente al 2 y obtener el mismo tiempo??
+R/ SI!! DANDO un poco de STRUCTURal informatio to Spark Y de una spark realizará optimizaciones por nosotros :) :) :)  
+
+
+::::::::::::::STRUCTURED vs UNSTRUCTURED::::::::::::::::::::::::::::::::::::::::::
+
+tOdos los datos tiene como el ciclo de ir de lo  UNSTRUCTURED a lo STRUCTURED PASANDO PO SEMI-STRUCTURED, es decir 
+
+UNSTRUCTURED(logs, images) >> SEMI-STRUCTURED(json, xml que son esquemas no tan rigisos como "database tables")  >>  STRUCTURED(database tables)
+
+HASTA LO QUE HEMOS VISTO solo llegabamos a SEMI-STRUCTURED con el uso de RDD, es decir que no sabe nada de datos estructurados es decir sabe la clase pero no el detalle
+sabe que es una persona, pero no como está conformado (que atributos??)
+Ejemplo sabe que es un RDDÑ[Account  pero no sabe que en su interior hay un id etc y que por x columna se logra mayor performance etc (como en las bases de datos)
+
+Al estructurarlo, por ejemplo usando Hive para crear la base de datos entonces Spark va a saber como optimizar y que distribuir 
+
+En una base de datos/Hive
+Declaramos transformaciones
+Indicamos operaciones predefinidas 
+
+con lo anterios viene SPARK - SQL que ofrece el estructurado de la información y optimiza varias cosas por nosotros, así el hecho de que nos toque mejorar el performance por nuestra cuenta disminuye 
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

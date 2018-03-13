@@ -85,7 +85,7 @@ las computaciones realizadas sobre un RDD )
 How are RDDs represented??
 por:
 1) Partition: Atomic pieces of the data Set, being one o many of them per node 
-2) Dendencies : Es el como hizo un Rdd(parent) para llegar a otro Rdd(child) ..fué un map?, filter? ...si map y las demás transformaciones se consideran dependencies  
+2) Denpendencies : Es el como hizo un Rdd(parent) para llegar a otro Rdd(child) ..fué un map?, filter? ...si map y las demás transformaciones se consideran dependencies  
 3) A function; La función aplicada para obtener el RDD hijo
 4) Metadata: Schema donde están alojados los datos
 
