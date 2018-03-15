@@ -12,7 +12,7 @@ R/ SI!! DANDO un poco de STRUCTURal informatio to Spark Y de una spark realizar�
 
 ::::::::::::::STRUCTURED vs UNSTRUCTURED::::::::::::::::::::::::::::::::::::::::::
 
-tOdos los datos tiene como el ciclo de ir de lo  UNSTRUCTURED a lo STRUCTURED PASANDO PO SEMI-STRUCTURED, es decir 
+tOdos los datos tiene como el ciclo de ir de lo  UNSTRUCTURED a lo STRUCTURED PASANDO POR SEMI-STRUCTURED, es decir 
 
 UNSTRUCTURED(logs, images) >> SEMI-STRUCTURED(json, xml que son esquemas no tan rigisos como "database tables")  >>  STRUCTURED(database tables)
 
@@ -26,6 +26,52 @@ En una base de datos/Hive
 Declaramos transformaciones
 Indicamos operaciones predefinidas 
 
-con lo anterios viene SPARK - SQL que ofrece el estructurado de la información y optimiza varias cosas por nosotros, así el hecho de que nos toque mejorar el performance por nuestra cuenta disminuye 
+con lo anterior viene SPARK - SQL que ofrece el estructurado de la información y optimiza varias cosas por nosotros, así el hecho de que nos toque mejorar el performance por nuestra cuenta disminuye 
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::marzo/14/2018::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+SPARK SQL, lo podemos ver como una librería encima de Spark :) que nos permite lo siguiente:
+
+1- sOPORTA EL procesamiento Relacional y accediendo vía sql pero por debajo es FUNCIONAL(maps and filter operations).
+
+
+
+Una tabla representa un coleccion de objectos tipo Cliente, usuario etc
+
+Un Relation no es mas de una Tabla
+Attributes son columnas 
+Rows son records of Tuples
+
+
+DataFrames es una abstraccion de Spark-Sql
+conceptualmente como una tabla en bases de datos relacionales o RDDs con un schema conocido
+
+DataFrames son untype, esto es que el compiler no verifica el tipo de su schema, es decir a diferfencia de RDD[T que si tiene un type eje RDD de Customers , dataframe no tiene
+
+
+Tarnsformations on DataFrames tambien se conocen como untype Transformations
+
+Todo inicia con SparkSession 
+
+Cómo crear un DataFrame:
+1- Desde un Rdd
+2 Desde un archivo
+
+
+
+
+::::LITERALS:::::
+createOrReplaceTemView 
+
+Los Sql statements disponible son los que HiveQl soporte 
+
+::::::::::::::::::::DATAFRAMES PARTE 1:::::::::::::::::::::::::::::::::::::
+
+
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+
+
