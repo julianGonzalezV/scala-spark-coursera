@@ -70,8 +70,91 @@ Los Sql statements disponible son los que HiveQl soporte
 
 
 
+
+
+
+
+
+Structs:
+Es un contenedor de posibles Struct fields de diferentes tipos, lo usan para representar clases (case clases) como data Types en Base de datos!! (ver min 6:12)
+
+
+Revisando los datos (operaciones para visualizar el contenido de un DataFrame)
+show(): Muestra los datos de manera tabular --Los primeros 20 
+printSchema(): Muestra el schema del DataFrame al que le aplico esta operacion,  en estructura de arbol
+
+
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
+::::::::::::::::::::TRANSFORMATIONS:::::::::::::::::::::::
 
+Select: Para seleccinar solo x columnas y retornar otro Dataframe(parecido al Map )
+agg: Aggregate para retornar un valor como resultado de x operación (lo relaciono con el reduce , aggregate, )
+GrouppBy: Agrupa el dataFrame basado en X columna.
+join: Inner Join con otro DataFrame.
+filer
+limit
+orderBy
+where 
+as
+sort
+union
+drop
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+TRABAJANDO CON COLUMNAS
+
+ENVOLVIENDOLO en df("age") > 30 o ($"age" > 30) o ("age > 30")
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+Group and Aggregate DataFrames::::::::::
+Es un PATRON común que siempre se haga primero el group y luego aggregate , cuando estamos trabajando con DataFrames
+
+groupBy: Retorna un tipo RelationalGroupedDataSet
+aggregate: Aplica una operacion aggregate al RelationalGroupedDataSet anterior, count sum , max , min avg  (ver min 22:15)
+
+
+min 26:23 están las referencias para ver todas las operaciones sobre RelationalGroupedDataSet
+
+
+::::::::::::::::::::DATAFRAMES PARTE 2:::::::::::::::::::::::::::::::::::::
+Cleaning Data with DataFrames:
+ante valores nulos or NaN que hacemos? drop de esos valores o replace por una constante?
+ Spark ofrece drop en sus variedades como , ,
+ drop() : para any
+drop(all) todas las columnas
+drop(Array(column1m column2)): solo esas columnas
+
+Y TAMBIEN OFRECE:
+
+Replace unwanted values:
+
+fill(0): todo lo que sea nulo  y numerico lo reemplaza por el valor dado, en éste caso 0.
+fill(map("salario"-> 0)): solo los valore nulos en esta columna se reemplaza
+fill(Array("codigo"), map("12"-> "3000")); Reemplazala columna (en éste caso codigo) por 
+
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::ACTIONS:::::::::::::::::::::::
+collect()
+count()
+first()
+show()
+take()
+
+
+
+
+::::::::::::::::::::::::::::::::::::::::::::::::::
+
+JOINS:
+IGUAL QUE RDDS adicionando el :
+leftsemi: 
+A CADA JPIN LE debemos decir por cuales columnas usar el join eje
+idaf1.join(df2, $"df1.c1" === $"df2.c2")
+
+para cambiar el tipo de join:
+idaf1.join(df2, $"df1.c1" === $"df2.c2", "leftOuterJoin")
 
