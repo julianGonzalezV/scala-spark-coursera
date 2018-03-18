@@ -188,3 +188,37 @@ pUEDA que se nos complique a la hora de represnetan yn tipo que no tengamos en s
 Sí tus datos no tiene una estructura entonces toca por el lado de RDDs
 
 ::::::::::::::::::::DATASETS:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+Cuando le hacemos collect a un DataFrame, éste nos devuelve un Arra[or.papache.spark.sql.Row  (y todo porque DataFrames son Untypes!!)
+y para acceder a los datos de éste nos tocaría hacerle un map y castear cada columna del Row al tipo que necesitamos MIN 3:43 MUESTRA LO ENGORROSO
+
+EXISTE ALGO MEJOR? R/ SI!! los DATASETS
+uN Dataframe es n DataSet de tipo Row :
+Dataframe = DataSet[Row]
+
+Optienes la solucion al tipado y mayor opciones de optimización que usando RDDs (pregunta y mejor performance que Dataframe?? R/ yo diría que igual porque finalmente es el tipo de DataFrame)
+
+DataSet unifica DataFrames y RDDS (conocido como Mix and Match!, esto es poder hacer un groupBy con lambdas como en RDD y liego un average como en DataFrames min 6:32)
+en la misma línea o pipe podemos tener rasgos de ambas APIs
+ min 9_20
+myDataFrame.toDs para obtener el DS
+o desde un Json 
+O desde Un RDD
+o desde un List scala 
+
+y la forma de tipar una columna es $columName.as[]
+
+Comon type transformation on DataSet : Min 13_42 map flatMap filter distinct groupByKey,
+ coalsece: 
+repartition:
+
+
+Al agrupar en Data Set el objeto retornado es un keyGrouped.. y a ése se le pueden aplicar operaciones de avg, count etc 
+ademas se ñe puede aplicar estas nuevas:
+reduceGroup
+agg (aggregation): Se le pasa el avg y otras Investigar
+mapGroup
+flatMapGroup
+
+Un reduceByKey en RDD pasa a ser un GroupByKey seguido de mapGroups en DataSet
+
