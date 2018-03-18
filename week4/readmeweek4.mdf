@@ -152,9 +152,39 @@ take()
 JOINS:
 IGUAL QUE RDDS adicionando el :
 leftsemi: 
-A CADA JPIN LE debemos decir por cuales columnas usar el join eje
+A CADA JoIN LE debemos decir por cuales columnas usar el join eje
 idaf1.join(df2, $"df1.c1" === $"df2.c2")
 
-para cambiar el tipo de join:
+para cambiar el tipo de join, entonces el método recibe otro parámetro:
 idaf1.join(df2, $"df1.c1" === $"df2.c2", "leftOuterJoin")
 
+
+::::::::::::::::::::OPTIMIZATIONS:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+Existen 2 compoementes especializados en el Back-end
+1) Catalyst : Query Optimizer: compila spark sql programs a RDDs
+Catalyst hace posible hacer optimizaciones como:
+- Reordering operations
+- pODEMOS mover menos datos en la Red porque como son datos estructurados entonces podemos seleccionar la información que interviene en el computo, con RDDS tenemos el objeto completo
+- Quitando particionamientos innecesarios 
+
+2) Tungsten: Off-heap Serializer
+ Tungsten provee:
+- high specialized data encoders: Tomar un esquema y montarlo en memoria lo que significa VELOCIDAD AL MOMENTO DE
+ SERIALIZAR Y DESERALIZAR
+- Columns based: rEALIZAR operaciones en columnas específicas
+
+Off-heap: Estar libres de la sobrecotsto del Colector de basura o garbage collector 
+
+
+
+:::::::::LIMITACIONES DE LOS DATAFRAMES:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+Untypes!!
+Lo que significa que los errores aparecerían en tiempo de ejecución JEMPLO  al hacer un select sobre algo que no existye 
+LO IDEAL ES QUE sea en tiempo de compilación 
+
+lYMITED DATA TYPE
+pUEDA que se nos complique a la hora de represnetan yn tipo que no tengamos en sprk
+
+Sí tus datos no tiene una estructura entonces toca por el lado de RDDs
+
+::::::::::::::::::::DATASETS:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
