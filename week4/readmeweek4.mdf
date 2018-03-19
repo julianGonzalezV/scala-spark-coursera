@@ -220,5 +220,96 @@ agg (aggregation): Se le pasa el avg y otras Investigar
 mapGroup
 flatMapGroup
 
-Un reduceByKey en RDD pasa a ser un GroupByKey seguido de mapGroups en DataSet
+
+:::::::::y tiene REDUCEbyKEY??::::::::::::::::
+
+Un reduceByKey en RDD pasa a ser un GroupByKey seguido de mapGroups en DataSet MIN 20:47
+PEERO la documentación habla del problema de nuevo con "mapGroups" que siempre hace shuffling
+min 23:55 lo cambian por un mapValues segudo de un ReduceGroups 
+
+PEERO la documenteción recomienda tambien usar aggregator::
+Clase que permite Generalizar la operacion aggregaret (acumulacion) de los datos 
+Aggegate[-IN, BUF, OUT]
+
+-IN: El tipo de entrada del aggregator, por ejemplo después de un  GroupByKey sería el tipo que represente el key/value pair
+BUF; El tipo intermedio durande el "aggrgation" process
+OUT: el tipo de salida de la operación al finalizar
+
+Sirve como para establecer nuestras propias funciones de Aggregation
+Lo bacano de usarlo es que al igual que el aggregate de RDDs lo que hace es realizar la operación en paralelo(diría que en la misma máquina porque la idea de usarlo es evitar el shuffling)
+ y luego obtener el resultado, combinando cada sub-resultado Min 26:55 muestran el código de la estructura de la clase
+
+Min 27:32 MUESTRA UN EJEMPLO APLICADO :)  VER COMO la final le dicen toColumn porque lo que se espera en un resultado dentro de un column 
+
+la final el pipeline queda que despues de un GroupByKey se le suma un agg(MyAggregate)
+
+Ojo que pide la implementación de los Encoders 
+
+:::::::::::::::::::ENCODER::::::::::::::::::::::::::..
+sON los que serializan y deserializan los datos para la traducción entr la JVM y SparkSql, requerido por tooodos los DataSets 
+La codificación ya viene optimizada, el almacenamiento de los datos serializados la lleva a cabo el Tungsten interno de Spark
+10 veces mas rápiro que Kryo(otra seralizacion de Java), aprovencha mejor la memoria
+
+-Permite el caching de los dataSets, esto se ve reflejado en un mejor performance!!
+
+
+La  implementcación se logra de 2 formas:
+
+Automaticamente: (la general) vía implicitos a travéz del SparkSession 
+
+Personalizada: Mediante el uso de la clase ....spark.sql.Encoder min 33:1 muestran los tipos de Encoders
+
+AHORA SI EN EL MIN 34:01 MUESTRAN la implementacion de los enconders que había fallado en el min 27:32(donde se estaba implementando el Aggregation)
+::::::::::::::::::::::::::..:::::::::::::::::::::::::
+
+Min 35:45 indican cuando unsar DataSets, DataFrame, RDDs, acá un resumen:
+
+DataSets
+Datos estructucturados o semiestructurados CON TIPIFICACIION SEGURA (TYPE SAFE) y ADEMÁS SE REQUIERE UN BUEN PERFORMANCE PERO NO EL MEJOR!!
+trabajaro con Apis funcionales como en Rdd siendo estrcturados como en DataFrames :) 
+
+DataFrame
+Datos estructucturados o semiestructurados y ADEMÁS SE REQUIERE EL MEJOR PERFORMANCE!!!, y que lo hagan automaticamente por nosotros 
+
+
+RDDs: Cuando nuestros datos no sea esturcturados y no le podamos dar una estructura especifica
+-DIFICULTAD DE SERIALIZACOIN con encoders
+-detalle más profundo 
+
+::::::::::::::::::::::
+
+Por lo anterior DataSets no tiene todas las optimizaciones que DataFrames si.
+ejemplo un filer en DataFrame sabe por cuales columnas irse, así el spark catalyst sabe como optimizar
+ MIENTRAS QUE un filter ne DataSet (functional version) requiere de todo el BLOB dentoro de su funcion lambda y spark 
+catalyst ya no sabe como optimizar ese mountruo 
+
+
+
+NOtas:
+En DataSets Cuando se usa la notacoin lambda(HOF) en funciones como map se pierde la optimizacion que Spark Catalyst puede hacer 
+Cuando se hace uso de Dataset con operaciones relacionales como select, relational filter(por columnas) entonces el caatlyst si PUEDE OPTIMIZAR 
+cOMPUTOS EN DATASETS pueden tener mejor performance que RDD por lo que se tienen el beneficion del spark tungsten corriendo under the hood
+
+-Se puede tener clases scala(regular scala class serpa con métodos etc??) tan complicadas que hace que sea una limiyante ante la variedad de tipo ofrecido por DataSets
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
