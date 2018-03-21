@@ -62,8 +62,18 @@ object TimeUsage {
     *         have type Double. None of the fields are nullable.
     * @param columnNames Column names of the DataFrame
     */
-  def dfSchema(columnNames: List[String]): StructType =
-    ???
+  def dfSchema(columnNames: List[String]): StructType ={
+    val fieldList = columnNames.map(column => {
+      StructField(column,{
+        if(column.equals("tucaseid")) StringType
+        else DoubleType
+      } , false)
+
+    })
+
+    StructType(fieldList)
+  }
+
 
 
   /** @return An RDD Row compatible with the schema produced by `dfSchema`
