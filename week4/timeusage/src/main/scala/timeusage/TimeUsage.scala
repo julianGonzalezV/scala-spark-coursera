@@ -79,8 +79,7 @@ object TimeUsage {
   /** @return An RDD Row compatible with the schema produced by `dfSchema`
     * @param line Raw fields
     */
-  def row(line: List[String]): Row =
-    ???
+  def row(line: List[String]): Row = Row.fromSeq(line)
 
   /** @return The initial data frame columns partitioned in three groups: primary needs (sleeping, eating, etc.),
     *         work and other (leisure activities)
@@ -98,7 +97,23 @@ object TimeUsage {
     *    “t10”, “t12”, “t13”, “t14”, “t15”, “t16” and “t18” (those which are not part of the previous groups only).
     */
   def classifiedColumns(columnNames: List[String]): (List[Column], List[Column], List[Column]) = {
-    ???
+    /*columnNames.map(columnN  => {
+      if(columnN.startsWith("t01")||columnN.startsWith("t03")||columnN.startsWith("t11")
+        ||columnN.startsWith("t1801") || columnN.startsWith("t1803")){
+
+      }else if(columnN.startsWith("t05")||columnN.startsWith("t1805"){
+
+      }else{
+
+      }
+    })*/
+    /*columnNames.for(
+      v1 <- List.empty
+      v1 <- s
+    )*/
+
+    columnNames.aggregate(List.empty,List.empty,List.empty)()
+
   }
 
   /** @return a projection of the initial DataFrame such that all columns containing hours spent on primary needs

@@ -193,7 +193,7 @@ Cuando le hacemos collect a un DataFrame, éste nos devuelve un Arra[or.papache.
 y para acceder a los datos de éste nos tocaría hacerle un map y castear cada columna del Row al tipo que necesitamos MIN 3:43 MUESTRA LO ENGORROSO
 
 EXISTE ALGO MEJOR? R/ SI!! los DATASETS
-uN Dataframe es n DataSet de tipo Row :
+uN Dataframe es un DataSet de tipo Row :
 Dataframe = DataSet[Row]
 
 Optienes la solucion al tipado y mayor opciones de optimización que usando RDDs (pregunta y mejor performance que Dataframe?? R/ yo diría que igual porque finalmente es el tipo de DataFrame)
