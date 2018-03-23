@@ -97,23 +97,26 @@ object TimeUsage {
     *    “t10”, “t12”, “t13”, “t14”, “t15”, “t16” and “t18” (those which are not part of the previous groups only).
     */
   def classifiedColumns(columnNames: List[String]): (List[Column], List[Column], List[Column]) = {
-    /*columnNames.map(columnN  => {
-      if(columnN.startsWith("t01")||columnN.startsWith("t03")||columnN.startsWith("t11")
-        ||columnN.startsWith("t1801") || columnN.startsWith("t1803")){
-
-      }else if(columnN.startsWith("t05")||columnN.startsWith("t1805"){
-
+    /*
+    Note como la funciion que combina combq (l1,l2)  => (l1._1 ::: l2._1,l1._2 ::: l2._2,l1._3 ::: l2._3) concatena ttodos los de
+    los otros computos que se hiciern en paralero
+     */
+   val v1: (List[Column], List[Column], List[Column]) =  columnNames.aggregate(List[Column]() ,List[Column](),List[Column]())((listTuple, columnElem ) => {
+      if(columnElem.startsWith("t01")||columnElem.startsWith("t03")||columnElem.startsWith("t11")
+        ||columnElem.startsWith("t1801") || columnElem.startsWith("t1803")){
+        col(columnElem) :: listTuple._1
+      }else  if(columnElem.startsWith("t05")||columnElem.startsWith("t1805")){
+        col(columnElem) :: listTuple._2
+      }else if(columnElem.startsWith("t02")||columnElem.startsWith("t04")||columnElem.startsWith("t07")
+                || columnElem.startsWith("t08")||columnElem.startsWith("t09")||columnElem.startsWith("t10")
+                || columnElem.startsWith("t12")||columnElem.startsWith("t13")||columnElem.startsWith("t14")
+                || columnElem.startsWith("t15")||columnElem.startsWith("t16")||columnElem.startsWith("t18")) {
+        col(columnElem) :: listTuple._3
       }else{
 
       }
-    })*/
-    /*columnNames.for(
-      v1 <- List.empty
-      v1 <- s
-    )*/
-
-    columnNames.aggregate(List.empty,List.empty,List.empty)()
-
+    }, (l1,l2)  => (l1._1 ::: l2._1,l1._2 ::: l2._2,l1._3 ::: l2._3))
+    v1
   }
 
   /** @return a projection of the initial DataFrame such that all columns containing hours spent on primary needs
