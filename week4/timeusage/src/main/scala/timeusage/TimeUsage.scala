@@ -159,15 +159,18 @@ object TimeUsage {
     // more sense for our use case
     // Hint: you can use the `when` and `otherwise` Spark functions
     // Hint: don’t forget to give your columns the expected name with the `as` method
-    val workingStatusProjection: Column = ???
-    val sexProjection: Column = ???
-    val ageProjection: Column = ???
+    //when((testModeTrue).and(uniqTrue), 1).otherwise(0)
+    val workingStatusProjection: Column = when($"telfs" <= 4, "working").otherwise("not working").as("working")
+    val sexProjection: Column =   when($"tesex" === 1, "male").otherwise("female").as("sex")
+    val ageProjection: Column = when($"teage" >= 15 and $"teage" <= 22, "young")
+      .when($"teage" >= 23 and $"teage" <= 55 , "active")
+      .otherwise("elder").as("age")
 
     // Create columns that sum columns of the initial dataset
     // Hint: you want to create a complex column expression that sums other columns
     //       by using the `+` operator between them
     // Hint: don’t forget to convert the value to hours
-    val primaryNeedsProjection: Column = ???
+    val primaryNeedsProjection: Column = primaryNeedsColumns
     val workProjection: Column = ???
     val otherProjection: Column = ???
     df
