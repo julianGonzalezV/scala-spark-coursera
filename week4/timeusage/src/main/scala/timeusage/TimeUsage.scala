@@ -170,9 +170,10 @@ object TimeUsage {
     // Hint: you want to create a complex column expression that sums other columns
     //       by using the `+` operator between them
     // Hint: don’t forget to convert the value to hours
-    val primaryNeedsProjection: Column = primaryNeedsColumns
-    val workProjection: Column = ???
-    val otherProjection: Column = ???
+    //ES POSIBLE MULTIPLICAR UNA SOLA VEZ ???
+    val primaryNeedsProjection = primaryNeedsColumns.reduce((el1, el2)=> (df(el1)*60) + (df(el2)*60)).as("primaryNeeds")
+    val workProjection: Column = workColumns.reduce(_ * 60 + _ * 60).as("work")
+    val otherProjection: Column = otherColumns.reduce(_ * 60 + _ * 60).as("other")
     df
       .select(workingStatusProjection, sexProjection, ageProjection, primaryNeedsProjection, workProjection, otherProjection)
       .where($"telfs" <= 4) // Discard people who are not in labor force
@@ -196,7 +197,9 @@ object TimeUsage {
     * Finally, the resulting DataFrame should be sorted by working status, sex and age.
     */
   def timeUsageGrouped(summed: DataFrame): DataFrame = {
-    ???
+    summed.groupBy($"working",$"sex",$"age",$"primaryNeeds",$"work",$"other")
+      .agg(round(avg("primaryNeeds"),1),round(avg("work"),1),round(avg("other"),1))
+      .orderBy($"working",$"sex",$"age")
   }
 
   /**
