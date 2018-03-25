@@ -216,8 +216,11 @@ object TimeUsage {
     * @param viewName Name of the SQL view to use
     */
   def timeUsageGroupedSqlQuery(viewName: String): String ={
-    "SELECT working, sex, age , primaryNeeds , work , other " +
-      " FROM  "
+    "SELECT working, sex, age , ROUND(AVG(primaryNeeds),1) AS primaryNeeds , " +
+      " ROUND(AVG(work),1) AS work , ROUND(AVG(other),1) AS other " +
+      " FROM summed  " +
+      " GROUP BY working, sex, age " +
+      " ORDER BY working, sex, age "
   }
 
 
@@ -229,7 +232,7 @@ object TimeUsage {
     * cast them at the same time.
     */
   def timeUsageSummaryTyped(timeUsageSummaryDf: DataFrame): Dataset[TimeUsageRow] =
-    ???
+    timeUsageSummaryDf.to
 
   /**
     * @return Same as `timeUsageGrouped`, but using the typed API when possible
