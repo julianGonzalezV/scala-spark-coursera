@@ -295,6 +295,8 @@ cOMPUTOS EN DATASETS pueden tener mejor performance que RDD por lo que se tienen
 
 
 
+cast entro tipos:https://medium.com/@InDataLabs/converting-spark-rdd-to-dataframe-and-dataset-expert-opinion-826db069eb5
+
 
 
 
