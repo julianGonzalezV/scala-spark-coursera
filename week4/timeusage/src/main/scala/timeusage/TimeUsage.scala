@@ -101,17 +101,20 @@ object TimeUsage {
     Note como la funciion que combina combq (l1,l2)  => (l1._1 ::: l2._1,l1._2 ::: l2._2,l1._3 ::: l2._3) concatena ttodos los de
     los otros computos que se hiciern en paralero
      */
-   val v1: (List[Column], List[Column], List[Column]) =  columnNames.aggregate(List[Column]() ,List[Column](),List[Column]())((listTuple, columnElem ) => {
+   val v1 =  columnNames.aggregate(List[Column]() ,List[Column](),List[Column]())((listTuple, columnElem ) => {
       if(columnElem.startsWith("t01")||columnElem.startsWith("t03")||columnElem.startsWith("t11")
         ||columnElem.startsWith("t1801") || columnElem.startsWith("t1803")){
-        col(columnElem) :: listTuple._1
+        val v1 = col(columnElem) :: listTuple._1
+        v1
       }else  if(columnElem.startsWith("t05")||columnElem.startsWith("t1805")){
-        col(columnElem) :: listTuple._2
+        val v2 = col(columnElem) :: listTuple._2
+        v2
       }else if(columnElem.startsWith("t02")||columnElem.startsWith("t04")||columnElem.startsWith("t07")
                 || columnElem.startsWith("t08")||columnElem.startsWith("t09")||columnElem.startsWith("t10")
                 || columnElem.startsWith("t12")||columnElem.startsWith("t13")||columnElem.startsWith("t14")
                 || columnElem.startsWith("t15")||columnElem.startsWith("t16")||columnElem.startsWith("t18")) {
-        col(columnElem) :: listTuple._3
+        val v3 =col(columnElem) :: listTuple._3
+        v3
       }else{
 
       }
@@ -231,8 +234,24 @@ object TimeUsage {
     * Hint: you should use the `getAs` method of `Row` to look up columns and
     * cast them at the same time.
     */
-  def timeUsageSummaryTyped(timeUsageSummaryDf: DataFrame): Dataset[TimeUsageRow] =
-    timeUsageSummaryDf.to
+  def timeUsageSummaryTyped(timeUsageSummaryDf: DataFrame): Dataset[TimeUsageRow] = {
+    /*
+    //probar implicitamente a ver si afecta performance ejemplo:
+      val tUsageDataSet2 = timeUsageSummaryDf.as[TimeUsageRow]
+     */
+
+
+    /**
+      * Version explicita
+      */
+
+    val tUsageDataSet = timeUsageSummaryDf.map(x =>  TimeUsageRow(x.getAs[String]("working"), x.getAs[String]("sex"),
+      x.getAs[String]("age"),x.getAs[Double]("primaryNeeds"),x.getAs[Double]("work"),x.getAs[Double]("other")))
+
+    tUsageDataSet
+
+  }
+
 
   /**
     * @return Same as `timeUsageGrouped`, but using the typed API when possible
@@ -247,7 +266,11 @@ object TimeUsage {
     */
   def timeUsageGroupedTyped(summed: Dataset[TimeUsageRow]): Dataset[TimeUsageRow] = {
     import org.apache.spark.sql.expressions.scalalang.typed
-    ???
+    summed.groupByKey(tRow  => (tRow.working, tRow.sex, tRow.age))
+      .agg( round(typed.avg[TimeUsageRow](_.primaryNeeds)).as[Double],
+        round(typed.avg[TimeUsageRow](_.work)).as[Double],
+        round(typed.avg[TimeUsageRow](_.other)).as[Double])
+      .orderBy($"working",$"sex",$"age")
   }
 }
 
