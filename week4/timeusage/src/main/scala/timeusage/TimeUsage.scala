@@ -104,21 +104,20 @@ object TimeUsage {
    val v1 =  columnNames.aggregate(List[Column]() ,List[Column](),List[Column]())((listTuple, columnElem ) => {
       if(columnElem.startsWith("t01")||columnElem.startsWith("t03")||columnElem.startsWith("t11")
         ||columnElem.startsWith("t1801") || columnElem.startsWith("t1803")){
-        val v1 = col(columnElem) :: listTuple._1
-        v1
+          (col(columnElem) :: listTuple._1,listTuple._2,listTuple._3 )
       }else  if(columnElem.startsWith("t05")||columnElem.startsWith("t1805")){
-        val v2 = col(columnElem) :: listTuple._2
-        v2
+        (listTuple._1,col(columnElem) :: listTuple._2,listTuple._3 )
       }else if(columnElem.startsWith("t02")||columnElem.startsWith("t04")||columnElem.startsWith("t07")
                 || columnElem.startsWith("t08")||columnElem.startsWith("t09")||columnElem.startsWith("t10")
                 || columnElem.startsWith("t12")||columnElem.startsWith("t13")||columnElem.startsWith("t14")
-                || columnElem.startsWith("t15")||columnElem.startsWith("t16")||columnElem.startsWith("t18")) {
-        val v3 =col(columnElem) :: listTuple._3
-        v3
-      }else{
+                || columnElem.startsWith("t15")||columnElem.startsWith("t16")||columnElem.startsWith("t18"))
+      {
+        (listTuple._1,listTuple._2,col(columnElem) :: listTuple._3)
 
-      }
+      }else (listTuple._1,listTuple._2,listTuple._3)
+
     }, (l1,l2)  => (l1._1 ::: l2._1,l1._2 ::: l2._2,l1._3 ::: l2._3))
+
     v1
   }
 
@@ -174,7 +173,7 @@ object TimeUsage {
     //       by using the `+` operator between them
     // Hint: don’t forget to convert the value to hours
     //ES POSIBLE MULTIPLICAR UNA SOLA VEZ ???
-    val primaryNeedsProjection = primaryNeedsColumns.reduce((el1, el2)=> (df(el1)*60) + (df(el2)*60)).as("primaryNeeds")
+    val primaryNeedsProjection: Column = primaryNeedsColumns.reduce((x,y) => x * 60 + y * 60).as("primaryNeeds")
     val workProjection: Column = workColumns.reduce(_ * 60 + _ * 60).as("work")
     val otherProjection: Column = otherColumns.reduce(_ * 60 + _ * 60).as("other")
     df
@@ -266,11 +265,19 @@ object TimeUsage {
     */
   def timeUsageGroupedTyped(summed: Dataset[TimeUsageRow]): Dataset[TimeUsageRow] = {
     import org.apache.spark.sql.expressions.scalalang.typed
-    summed.groupByKey(tRow  => (tRow.working, tRow.sex, tRow.age))
+    //Dataset[((String, String, String), Double, Double, Double)]
+    val v1 = summed.groupByKey(tRow  => (tRow.working, tRow.sex, tRow.age))
       .agg( round(typed.avg[TimeUsageRow](_.primaryNeeds)).as[Double],
         round(typed.avg[TimeUsageRow](_.work)).as[Double],
         round(typed.avg[TimeUsageRow](_.other)).as[Double])
+        .map{
+          case (tupleStr, pNeeds, work, other) =>
+            TimeUsageRow(tupleStr._1 ,tupleStr._2 ,tupleStr._3, pNeeds, work , other )
+
+        }
       .orderBy($"working",$"sex",$"age")
+
+    v1
   }
 }
 
