@@ -18,6 +18,7 @@ object TimeUsage {
       .config("spark.master", "local")
       .getOrCreate()
 
+
   // For implicit conversions like converting RDDs to DataFrames
   import spark.implicits._
 
@@ -36,6 +37,7 @@ object TimeUsage {
 
   /** @return The read DataFrame along with its column names. */
   def read(resource: String): (List[String], DataFrame) = {
+
     val rdd = spark.sparkContext.textFile(fsPath(resource))
 
     val headerColumns = rdd.first().split(",").to[List]
@@ -107,14 +109,16 @@ object TimeUsage {
           (col(columnElem) :: listTuple._1,listTuple._2,listTuple._3 )
       }else  if(columnElem.startsWith("t05")||columnElem.startsWith("t1805")){
         (listTuple._1,col(columnElem) :: listTuple._2,listTuple._3 )
-      }else if(columnElem.startsWith("t02")||columnElem.startsWith("t04")||columnElem.startsWith("t07")
+      }
+      else if(columnElem.startsWith("t02")||columnElem.startsWith("t04")||columnElem.startsWith("t06") ||columnElem.startsWith("t07")
                 || columnElem.startsWith("t08")||columnElem.startsWith("t09")||columnElem.startsWith("t10")
                 || columnElem.startsWith("t12")||columnElem.startsWith("t13")||columnElem.startsWith("t14")
                 || columnElem.startsWith("t15")||columnElem.startsWith("t16")||columnElem.startsWith("t18"))
       {
         (listTuple._1,listTuple._2,col(columnElem) :: listTuple._3)
 
-      }else (listTuple._1,listTuple._2,listTuple._3)
+      }
+      else (listTuple._1,listTuple._2,listTuple._3)
 
     }, (l1,l2)  => (l1._1 ::: l2._1,l1._2 ::: l2._2,l1._3 ::: l2._3))
 
@@ -173,12 +177,13 @@ object TimeUsage {
     //       by using the `+` operator between them
     // Hint: don’t forget to convert the value to hours
     //ES POSIBLE MULTIPLICAR UNA SOLA VEZ ???
-    val primaryNeedsProjection: Column = primaryNeedsColumns.reduce((x,y) => x * 60 + y * 60).as("primaryNeeds")
-    val workProjection: Column = workColumns.reduce(_ * 60 + _ * 60).as("work")
-    val otherProjection: Column = otherColumns.reduce(_ * 60 + _ * 60).as("other")
-    df
-      .select(workingStatusProjection, sexProjection, ageProjection, primaryNeedsProjection, workProjection, otherProjection)
+    val primaryNeedsProjection: Column = primaryNeedsColumns.map(x=> x*60).reduce((x,y) => x + y).as("primaryNeeds")
+    val workProjection: Column = workColumns.map(x=> x*60).reduce(_ + _ ).as("work")
+    val otherProjection: Column = otherColumns.map(x=> x*60).reduce(_ + _).as("other")
+    val result = df.select(workingStatusProjection, sexProjection, ageProjection, primaryNeedsProjection , workProjection , otherProjection)
       .where($"telfs" <= 4) // Discard people who are not in labor force
+
+    result
   }
 
   /** @return the average daily time (in hours) spent in primary needs, working or leisure, grouped by the different
@@ -199,6 +204,7 @@ object TimeUsage {
     * Finally, the resulting DataFrame should be sorted by working status, sex and age.
     */
   def timeUsageGrouped(summed: DataFrame): DataFrame = {
+
     summed.groupBy($"working",$"sex",$"age",$"primaryNeeds",$"work",$"other")
       .agg(round(avg("primaryNeeds"),1),round(avg("work"),1),round(avg("other"),1))
       .orderBy($"working",$"sex",$"age")
