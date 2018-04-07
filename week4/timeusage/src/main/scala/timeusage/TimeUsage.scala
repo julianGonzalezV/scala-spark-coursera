@@ -31,6 +31,7 @@ object TimeUsage {
     val (columns, initDf) = read("/timeusage/atussum.csv")
     val (primaryNeedsColumns, workColumns, otherColumns) = classifiedColumns(columns)
     val summaryDf = timeUsageSummary(primaryNeedsColumns, workColumns, otherColumns, initDf)
+    summaryDf.show()
     val finalDf = timeUsageGrouped(summaryDf)
     finalDf.show()
   }
@@ -67,8 +68,7 @@ object TimeUsage {
   def dfSchema(columnNames: List[String]): StructType ={
     val fieldList = columnNames.map(column => {
       StructField(column,{
-        if(column.equals("tucaseid")) StringType
-        else DoubleType
+        if(column.equals(columnNames.head)) StringType else DoubleType
       } , false)
 
     })
@@ -81,7 +81,14 @@ object TimeUsage {
   /** @return An RDD Row compatible with the schema produced by `dfSchema`
     * @param line Raw fields
     */
-  def row(line: List[String]): Row = Row.fromSeq(line)
+  def row(line: List[String]): Row ={
+    val lineAux = line.head :: line.tail.map(elem => elem.toDouble)
+    Row.fromSeq(lineAux)
+   /* System.out.println("lines")
+    line.foreach(System.out.print(_))
+    val v1 = Row.fromSeq(line)
+    v1*/
+  }
 
   /** @return The initial data frame columns partitioned in three groups: primary needs (sleeping, eating, etc.),
     *         work and other (leisure activities)
@@ -205,7 +212,7 @@ object TimeUsage {
     */
   def timeUsageGrouped(summed: DataFrame): DataFrame = {
 
-    summed.groupBy($"working",$"sex",$"age",$"primaryNeeds",$"work",$"other")
+   summed.groupBy($"working",$"sex",$"age",$"primaryNeeds",$"work",$"other")
       .agg(round(avg("primaryNeeds"),1),round(avg("work"),1),round(avg("other"),1))
       .orderBy($"working",$"sex",$"age")
   }
