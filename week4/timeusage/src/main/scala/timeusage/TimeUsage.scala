@@ -84,10 +84,6 @@ object TimeUsage {
   def row(line: List[String]): Row ={
     val lineAux = line.head :: line.tail.map(elem => elem.toDouble)
     Row.fromSeq(lineAux)
-   /* System.out.println("lines")
-    line.foreach(System.out.print(_))
-    val v1 = Row.fromSeq(line)
-    v1*/
   }
 
   /** @return The initial data frame columns partitioned in three groups: primary needs (sleeping, eating, etc.),
@@ -173,7 +169,7 @@ object TimeUsage {
     // Hint: you can use the `when` and `otherwise` Spark functions
     // Hint: don’t forget to give your columns the expected name with the `as` method
     //when((testModeTrue).and(uniqTrue), 1).otherwise(0)
-    val workingStatusProjection: Column = when($"telfs" <= 4, "working").otherwise("not working").as("working")
+    val workingStatusProjection: Column = when($"telfs" >= 1 and $"telfs" < 3 , "working").otherwise("not working").as("working")
     val sexProjection: Column =   when($"tesex" === 1, "male").otherwise("female").as("sex")
     val ageProjection: Column = when($"teage" >= 15 and $"teage" <= 22, "young")
       .when($"teage" >= 23 and $"teage" <= 55 , "active")
@@ -184,9 +180,9 @@ object TimeUsage {
     //       by using the `+` operator between them
     // Hint: don’t forget to convert the value to hours
     //ES POSIBLE MULTIPLICAR UNA SOLA VEZ ???
-    val primaryNeedsProjection: Column = primaryNeedsColumns.map(x=> x*60).reduce((x,y) => x + y).as("primaryNeeds")
-    val workProjection: Column = workColumns.map(x=> x*60).reduce(_ + _ ).as("work")
-    val otherProjection: Column = otherColumns.map(x=> x*60).reduce(_ + _).as("other")
+    val primaryNeedsProjection: Column = primaryNeedsColumns.map(x=> x/60).reduce((x,y) => x + y).as("primaryNeeds")
+    val workProjection: Column = workColumns.map(x=> x/60).reduce(_ + _ ).as("work")
+    val otherProjection: Column = otherColumns.map(x=> x/60).reduce(_ + _).as("other")
     val result = df.select(workingStatusProjection, sexProjection, ageProjection, primaryNeedsProjection , workProjection , otherProjection)
       .where($"telfs" <= 4) // Discard people who are not in labor force
 
@@ -211,9 +207,10 @@ object TimeUsage {
     * Finally, the resulting DataFrame should be sorted by working status, sex and age.
     */
   def timeUsageGrouped(summed: DataFrame): DataFrame = {
-
+//ojo no olvidar colocar el as despues de los rounds para que no quede en el resultado el nombre de la columna algo asi como
+    //round(avg(primaryNeeds), 1)
    summed.groupBy($"working",$"sex",$"age",$"primaryNeeds",$"work",$"other")
-      .agg(round(avg("primaryNeeds"),1),round(avg("work"),1),round(avg("other"),1))
+      .agg(round(avg("primaryNeeds"),1).as("primaryNeeds"),round(avg("work"),1).as("work"),round(avg("other"),1).as("other"))
       .orderBy($"working",$"sex",$"age")
   }
 
@@ -233,7 +230,7 @@ object TimeUsage {
   def timeUsageGroupedSqlQuery(viewName: String): String ={
     "SELECT working, sex, age , ROUND(AVG(primaryNeeds),1) AS primaryNeeds , " +
       " ROUND(AVG(work),1) AS work , ROUND(AVG(other),1) AS other " +
-      " FROM summed  " +
+      " FROM " +viewName+" "+
       " GROUP BY working, sex, age " +
       " ORDER BY working, sex, age "
   }
