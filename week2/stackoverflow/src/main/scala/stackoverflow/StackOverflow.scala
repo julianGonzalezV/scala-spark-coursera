@@ -27,13 +27,7 @@ object StackOverflow extends StackOverflow {
 
     val grouped = groupedPostings(raw)
     val scored  = scoredPostings(grouped)//.sample(true,0.1,0)
-    val vectors = vectorPostings(scored).cache()
-
-    // val tunedPartition = new RangePartitioner(4, vectors)
-
-//System.out.println("vectors.count() "+vectors.count())
-//    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
-//MEANS va a ser sampleVectors(vectors) como set inicializador del kmeans algorithm
+    val vectors = vectorPostings(scored)
     val means   = kmeans(sampleVectors(vectors), vectors, debug = true)
     val results = clusterResults(means, vectors)
     printResults(results)
@@ -86,18 +80,14 @@ class StackOverflow extends Serializable {
   /** Group the questions and answers together */
   def groupedPostings(postings: RDD[Posting]): RDD[(QID, Iterable[(Question, Answer)])] = {
 
-    val questions  = postings.filter(posting => posting.postingType == 1).map(q => (q.id, q))
+    val questionsRdd  = postings.filter(posting => posting.postingType == 1).map(q => (q.id, q))
+    val answersRdd  = postings.filter(posting => posting.postingType == 2).map(a => (a.parentId.getOrElse(-1), a))
 
-    postings.filter(posting => posting.postingType == 2).map(a => (a.parentId.get, a))
-      .join(questions)
-      .aggregateByKey (Iterable.empty[(Question, Question)])(
-      (listResult, value) => listResult ++ (value :: Nil),
-      (list1, list2) => list1 ++  list2
-    )
+    questionsRdd.join(answersRdd).groupByKey()
 
 
 
-    //joined.groupByKey()
+
 
   }
 
@@ -105,19 +95,7 @@ class StackOverflow extends Serializable {
   /** Compute the maximum score for each posting */
   def scoredPostings(grouped: RDD[(QID, Iterable[(Question, Answer)])]): RDD[(Question, HighScore)] = {
 
-    /*def answerHighScore(as: Array[Answer]): HighScore = {
-      var highScore = 0
-          var i = 0
-          while (i < as.length) {
-            val score = as(i).score
-                if (score > highScore)
-                  highScore = score
-                  i += 1
-          }
-      highScore
-    }*/
     def answerHighScore(as: Iterable[Posting]): Int = as.map(_.score).max
-
     grouped.map(item => (item._2.head._1,answerHighScore(item._2.map(x => x._2 ))))
   }
 
@@ -144,7 +122,7 @@ class StackOverflow extends Serializable {
       case None => -1
     }, item._2) ).filter(x   => x._1 != -1)
 
-    pairIndexHs
+    pairIndexHs.cache()
   }
 
 
@@ -283,12 +261,6 @@ part1 + part2
 
 /** Return the euclidean distance between two points */
 def euclideanDistance(a1: Array[(Int, Int)], a2: Array[(Int, Int)]): Double = {
-/*
-System.out.println("a1.length "+a1.length + "  a2.length "+a2.length)
-System.out.println("a1 es::::::::::::::::::::::::::::::::: ")
-System.out.println(a1.foreach(print(_)) )
-System.out.println("a2 es::::::::::::::::::::::::::::::::: ")
-System.out.println(a2.foreach(print(_))  )*/
 assert(a1.length == a2.length)
 var sum = 0d
 var idx = 0
@@ -373,9 +345,6 @@ val median: RDD[(HighScore, (String, Double, HighScore, HighScore))] = closestGr
     */
 
   val median = vs.toList.sortBy(_._2).map(x  => x._2)
-/*  println("median:" +Math.floor(clusterSize/2))
-  println("median records:"+median)
-  median.foreach(print(_))*/
   val medianScore = {
     if((vs.size % 2) == 0) {
       Math.round((median((clusterSize/2)-1) + median(clusterSize/2)) / 2)

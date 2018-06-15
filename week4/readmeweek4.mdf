@@ -77,7 +77,248 @@ Los elementos dentro de un Dataframe son Rows!!
 
 min 2:36 Tipos de datos 
 
+
+
+
+
+
+Structs:
+Es un contenedor de posibles Struct fields de diferentes tipos, lo usan para representar clases (case clases) como data Types en Base de datos!! (ver min 6:12)
+
+
+Revisando los datos (operaciones para visualizar el contenido de un DataFrame)
+show(): Muestra los datos de manera tabular --Los primeros 20 
+printSchema(): Muestra el schema del DataFrame al que le aplico esta operacion,  en estructura de arbol
+
+
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+::::::::::::::::::::TRANSFORMATIONS:::::::::::::::::::::::
+
+Select: Para seleccinar solo x columnas y retornar otro Dataframe(parecido al Map )
+agg: Aggregate para retornar un valor como resultado de x operación (lo relaciono con el reduce , aggregate, )
+GrouppBy: Agrupa el dataFrame basado en X columna.
+join: Inner Join con otro DataFrame.
+filer
+limit
+orderBy
+where 
+as
+sort
+union
+drop
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+TRABAJANDO CON COLUMNAS
+
+ENVOLVIENDOLO en df("age") > 30 o ($"age" > 30) o ("age > 30")
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+Group and Aggregate DataFrames::::::::::
+Es un PATRON común que siempre se haga primero el group y luego aggregate , cuando estamos trabajando con DataFrames
+
+groupBy: Retorna un tipo RelationalGroupedDataSet
+aggregate: Aplica una operacion aggregate al RelationalGroupedDataSet anterior, count sum , max , min avg  (ver min 22:15)
+
+
+min 26:23 están las referencias para ver todas las operaciones sobre RelationalGroupedDataSet
+
+
+::::::::::::::::::::DATAFRAMES PARTE 2:::::::::::::::::::::::::::::::::::::
+Cleaning Data with DataFrames:
+ante valores nulos or NaN que hacemos? drop de esos valores o replace por una constante?
+ Spark ofrece drop en sus variedades como , ,
+ drop() : para any
+drop(all) todas las columnas
+drop(Array(column1m column2)): solo esas columnas
+
+Y TAMBIEN OFRECE:
+
+Replace unwanted values:
+
+fill(0): todo lo que sea nulo  y numerico lo reemplaza por el valor dado, en éste caso 0.
+fill(map("salario"-> 0)): solo los valore nulos en esta columna se reemplaza
+fill(Array("codigo"), map("12"-> "3000")); Reemplazala columna (en éste caso codigo) por 
+
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::ACTIONS:::::::::::::::::::::::
+collect()
+count()
+first()
+show()
+take()
+
+
+
+
+::::::::::::::::::::::::::::::::::::::::::::::::::
+
+JOINS:
+IGUAL QUE RDDS adicionando el :
+leftsemi: 
+A CADA JoIN LE debemos decir por cuales columnas usar el join eje
+idaf1.join(df2, $"df1.c1" === $"df2.c2")
+
+para cambiar el tipo de join, entonces el método recibe otro parámetro:
+idaf1.join(df2, $"df1.c1" === $"df2.c2", "leftOuterJoin")
+
+
+::::::::::::::::::::OPTIMIZATIONS:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+Existen 2 compoementes especializados en el Back-end
+1) Catalyst : Query Optimizer: compila spark sql programs a RDDs
+Catalyst hace posible hacer optimizaciones como:
+- Reordering operations
+- pODEMOS mover menos datos en la Red porque como son datos estructurados entonces podemos seleccionar la información que interviene en el computo, con RDDS tenemos el objeto completo
+- Quitando particionamientos innecesarios 
+
+2) Tungsten: Off-heap Serializer
+ Tungsten provee:
+- high specialized data encoders: Tomar un esquema y montarlo en memoria lo que significa VELOCIDAD AL MOMENTO DE
+ SERIALIZAR Y DESERALIZAR
+- Columns based: rEALIZAR operaciones en columnas específicas
+
+Off-heap: Estar libres de la sobrecotsto del Colector de basura o garbage collector 
+
+
+
+:::::::::LIMITACIONES DE LOS DATAFRAMES:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+Untypes!!
+Lo que significa que los errores aparecerían en tiempo de ejecución JEMPLO  al hacer un select sobre algo que no existye 
+LO IDEAL ES QUE sea en tiempo de compilación 
+
+lYMITED DATA TYPE
+pUEDA que se nos complique a la hora de represnetan yn tipo que no tengamos en sprk
+
+Sí tus datos no tiene una estructura entonces toca por el lado de RDDs
+
+::::::::::::::::::::DATASETS:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+Cuando le hacemos collect a un DataFrame, éste nos devuelve un Arra[or.papache.spark.sql.Row  (y todo porque DataFrames son Untypes!!)
+y para acceder a los datos de éste nos tocaría hacerle un map y castear cada columna del Row al tipo que necesitamos MIN 3:43 MUESTRA LO ENGORROSO
+
+EXISTE ALGO MEJOR? R/ SI!! los DATASETS
+uN Dataframe es un DataSet de tipo Row :
+Dataframe = DataSet[Row]
+
+Optienes la solucion al tipado y mayor opciones de optimización que usando RDDs (pregunta y mejor performance que Dataframe?? R/ yo diría que igual porque finalmente es el tipo de DataFrame)
+
+DataSet unifica DataFrames y RDDS (conocido como Mix and Match!, esto es poder hacer un groupBy con lambdas como en RDD y liego un average como en DataFrames min 6:32)
+en la misma línea o pipe podemos tener rasgos de ambas APIs
+ min 9_20
+myDataFrame.toDs para obtener el DS
+o desde un Json 
+O desde Un RDD
+o desde un List scala 
+
+y la forma de tipar una columna es $columName.as[]
+
+Comon type transformation on DataSet : Min 13_42 map flatMap filter distinct groupByKey,
+ coalsece: 
+repartition:
+
+
+Al agrupar en Data Set el objeto retornado es un keyGrouped.. y a ése se le pueden aplicar operaciones de avg, count etc 
+ademas se ñe puede aplicar estas nuevas:
+reduceGroup
+agg (aggregation): Se le pasa el avg y otras Investigar
+mapGroup
+flatMapGroup
+
+
+:::::::::y tiene REDUCEbyKEY??::::::::::::::::
+
+Un reduceByKey en RDD pasa a ser un GroupByKey seguido de mapGroups en DataSet MIN 20:47
+PEERO la documentación habla del problema de nuevo con "mapGroups" que siempre hace shuffling
+min 23:55 lo cambian por un mapValues segudo de un ReduceGroups 
+
+PEERO la documenteción recomienda tambien usar aggregator::
+Clase que permite Generalizar la operacion aggregaret (acumulacion) de los datos 
+Aggegate[-IN, BUF, OUT]
+
+-IN: El tipo de entrada del aggregator, por ejemplo después de un  GroupByKey sería el tipo que represente el key/value pair
+BUF; El tipo intermedio durande el "aggrgation" process
+OUT: el tipo de salida de la operación al finalizar
+
+Sirve como para establecer nuestras propias funciones de Aggregation
+Lo bacano de usarlo es que al igual que el aggregate de RDDs lo que hace es realizar la operación en paralelo(diría que en la misma máquina porque la idea de usarlo es evitar el shuffling)
+ y luego obtener el resultado, combinando cada sub-resultado Min 26:55 muestran el código de la estructura de la clase
+
+Min 27:32 MUESTRA UN EJEMPLO APLICADO :)  VER COMO la final le dicen toColumn porque lo que se espera en un resultado dentro de un column 
+
+la final el pipeline queda que despues de un GroupByKey se le suma un agg(MyAggregate)
+
+Ojo que pide la implementación de los Encoders 
+
+:::::::::::::::::::ENCODER::::::::::::::::::::::::::..
+sON los que serializan y deserializan los datos para la traducción entr la JVM y SparkSql, requerido por tooodos los DataSets 
+La codificación ya viene optimizada, el almacenamiento de los datos serializados la lleva a cabo el Tungsten interno de Spark
+10 veces mas rápiro que Kryo(otra seralizacion de Java), aprovencha mejor la memoria
+
+-Permite el caching de los dataSets, esto se ve reflejado en un mejor performance!!
+
+
+La  implementcación se logra de 2 formas:
+
+Automaticamente: (la general) vía implicitos a travéz del SparkSession 
+
+Personalizada: Mediante el uso de la clase ....spark.sql.Encoder min 33:1 muestran los tipos de Encoders
+
+AHORA SI EN EL MIN 34:01 MUESTRAN la implementacion de los enconders que había fallado en el min 27:32(donde se estaba implementando el Aggregation)
+::::::::::::::::::::::::::..:::::::::::::::::::::::::
+
+Min 35:45 indican cuando unsar DataSets, DataFrame, RDDs, acá un resumen:
+
+DataSets
+Datos estructucturados o semiestructurados CON TIPIFICACIION SEGURA (TYPE SAFE) y ADEMÁS SE REQUIERE UN BUEN PERFORMANCE PERO NO EL MEJOR!!
+trabajaro con Apis funcionales como en Rdd siendo estrcturados como en DataFrames :) 
+
+DataFrame
+Datos estructucturados o semiestructurados y ADEMÁS SE REQUIERE EL MEJOR PERFORMANCE!!!, y que lo hagan automaticamente por nosotros 
+
+
+RDDs: Cuando nuestros datos no sea esturcturados y no le podamos dar una estructura especifica
+-DIFICULTAD DE SERIALIZACOIN con encoders
+-detalle más profundo 
+
+::::::::::::::::::::::
+
+Por lo anterior DataSets no tiene todas las optimizaciones que DataFrames si.
+ejemplo un filer en DataFrame sabe por cuales columnas irse, así el spark catalyst sabe como optimizar
+ MIENTRAS QUE un filter ne DataSet (functional version) requiere de todo el BLOB dentoro de su funcion lambda y spark 
+catalyst ya no sabe como optimizar ese mountruo 
+
+
+
+NOtas:
+En DataSets Cuando se usa la notacoin lambda(HOF) en funciones como map se pierde la optimizacion que Spark Catalyst puede hacer 
+Cuando se hace uso de Dataset con operaciones relacionales como select, relational filter(por columnas) entonces el caatlyst si PUEDE OPTIMIZAR 
+cOMPUTOS EN DATASETS pueden tener mejor performance que RDD por lo que se tienen el beneficion del spark tungsten corriendo under the hood
+
+-Se puede tener clases scala(regular scala class serpa con métodos etc??) tan complicadas que hace que sea una limiyante ante la variedad de tipo ofrecido por DataSets
+
+
+
+
+cast entro tipos:
+https://medium.com/@InDataLabs/converting-spark-rdd-to-dataframe-and-dataset-expert-opinion-826db069eb5
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
