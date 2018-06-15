@@ -67,8 +67,15 @@ createOrReplaceTemView
 Los Sql statements disponible son los que HiveQl soporte 
 
 ::::::::::::::::::::DATAFRAMES PARTE 1:::::::::::::::::::::::::::::::::::::
+Recordar que con DataFrames ejecutamos sintaxis SQL
 
+DATAFRAMES es un api relacional sobre RDD de Spark
 
+Se trae los beneficios de optimización de Relational DataBase
+
+Los elementos dentro de un Dataframe son Rows!!
+
+min 2:36 Tipos de datos 
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
