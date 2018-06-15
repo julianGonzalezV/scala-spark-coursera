@@ -180,13 +180,13 @@ Catalyst hace posible hacer optimizaciones como:
  SERIALIZAR Y DESERALIZAR
 - Columns based: rEALIZAR operaciones en columnas específicas
 
-Off-heap: Estar libres de la sobrecotsto del Colector de basura o garbage collector 
+Off-heap: Estar libres de la sobrecostto del Colector de basura o garbage collector 
 
 
 
 :::::::::LIMITACIONES DE LOS DATAFRAMES:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 Untypes!!
-Lo que significa que los errores aparecerían en tiempo de ejecución JEMPLO  al hacer un select sobre algo que no existye 
+Lo que significa que los errores aparecerían en tiempo de ejecución EJEMPLO  al hacer un select sobre algo que no existye 
 LO IDEAL ES QUE sea en tiempo de compilación 
 
 lYMITED DATA TYPE
@@ -273,7 +273,7 @@ Min 35:45 indican cuando unsar DataSets, DataFrame, RDDs, acá un resumen:
 
 DataSets
 Datos estructucturados o semiestructurados CON TIPIFICACIION SEGURA (TYPE SAFE) y ADEMÁS SE REQUIERE UN BUEN PERFORMANCE PERO NO EL MEJOR!!
-trabajaro con Apis funcionales como en Rdd siendo estrcturados como en DataFrames :) 
+trabajar con Apis funcionales como en Rdd siendo estructurados como en DataFrames :) 
 
 DataFrame
 Datos estructucturados o semiestructurados y ADEMÁS SE REQUIERE EL MEJOR PERFORMANCE!!!, y que lo hagan automaticamente por nosotros 
@@ -286,8 +286,8 @@ RDDs: Cuando nuestros datos no sea esturcturados y no le podamos dar una estruct
 ::::::::::::::::::::::
 
 Por lo anterior DataSets no tiene todas las optimizaciones que DataFrames si.
-ejemplo un filer en DataFrame sabe por cuales columnas irse, así el spark catalyst sabe como optimizar
- MIENTRAS QUE un filter ne DataSet (functional version) requiere de todo el BLOB dentoro de su funcion lambda y spark 
+ejemplo un filter en DataFrame sabe por cuales columnas irse, así el spark catalyst sabe como optimizar
+ MIENTRAS QUE un filter en DataSet (functional version) requiere de todo el BLOB dentro de su funcion lambda y spark 
 catalyst ya no sabe como optimizar ese mountruo 
 
 
